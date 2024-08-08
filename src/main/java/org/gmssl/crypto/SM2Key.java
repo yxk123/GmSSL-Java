@@ -12,6 +12,8 @@ import java.security.Key;
  */
 public abstract class SM2Key implements Key {
 
+    public final static int MAX_PLAINTEXT_SIZE = GmSSLJNI.SM2_MAX_PLAINTEXT_SIZE;
+
     protected long sm2_key = 0;
     protected boolean has_private_key = false;
 
@@ -26,6 +28,23 @@ public abstract class SM2Key implements Key {
     @Override
     public String getAlgorithm() {
         return "SM2";
+    }
+
+    long getPrivateKey() {
+        if (this.sm2_key == 0) {
+            throw new GmSSLException("");
+        }
+        if (this.has_private_key == false) {
+            throw new GmSSLException("");
+        }
+        return this.sm2_key;
+    }
+
+    long getPublicKey() {
+        if (this.sm2_key == 0) {
+            throw new GmSSLException("");
+        }
+        return this.sm2_key;
     }
 
 }

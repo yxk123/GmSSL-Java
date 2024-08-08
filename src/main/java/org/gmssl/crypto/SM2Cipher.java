@@ -1,6 +1,10 @@
 package org.gmssl.crypto;
 
+import org.gmssl.GmSSLException;
+import org.gmssl.GmSSLJNI;
+
 import javax.crypto.*;
+import java.nio.ByteBuffer;
 import java.security.*;
 import java.security.spec.AlgorithmParameterSpec;
 
@@ -11,17 +15,25 @@ import java.security.spec.AlgorithmParameterSpec;
  */
 public class SM2Cipher extends CipherSpi {
 
-    private Key key;
-    private int opmode;
+    private int mode;
+    private SM2Key key;
+    private SecureRandom random;
+    private ByteBuffer buffer;
 
     @Override
-    protected void engineSetMode(String s) throws NoSuchAlgorithmException {
-        // 实现加密模式设置，SM2不需要设置模式，可以留空
+    protected void engineSetMode(String mode) throws NoSuchAlgorithmException {
+        if (!mode.equalsIgnoreCase("ECB")) {
+            throw new NoSuchAlgorithmException("Unsupported mode: " + mode);
+        }
+        // SM2 只支持 ECB 模式
     }
 
     @Override
-    protected void engineSetPadding(String s) throws NoSuchPaddingException {
-        // 实现填充方式设置，SM2不需要填充，可以留空
+    protected void engineSetPadding(String padding) throws NoSuchPaddingException {
+        if (!padding.equalsIgnoreCase("NoPadding")) {
+            throw new NoSuchPaddingException("Unsupported padding: " + padding);
+        }
+        // SM2 不使用填充
     }
 
     @Override
@@ -31,58 +43,115 @@ public class SM2Cipher extends CipherSpi {
     }
 
     @Override
-    protected int engineGetOutputSize(int i) {
+    protected int engineGetOutputSize(int inputLen) {
         // 根据输入长度计算输出长度
         // 这里只是示例，具体实现需要根据实际情况调整
         // 例如，假设增加一个固定长度的输出
-        return i+32;
+        return inputLen+32;
     }
 
     @Override
     protected byte[] engineGetIV() {
-        // SM2 不使用 IV，可以返回 null
-        return new byte[0];
-    }
-
-    @Override
-    protected AlgorithmParameters engineGetParameters() {
-        // SM2 不使用参数，可以返回 null
+        // // SM2 不使用 IV
         return null;
     }
 
     @Override
-    protected void engineInit(int i, Key key, SecureRandom secureRandom) throws InvalidKeyException {
-        this.key = key;
-        this.opmode = i;
+    protected AlgorithmParameters engineGetParameters() {
+        // SM2 不使用参数
+        return null;
     }
 
     @Override
-    protected void engineInit(int i, Key key, AlgorithmParameterSpec algorithmParameterSpec, SecureRandom secureRandom) throws InvalidKeyException, InvalidAlgorithmParameterException {
+    protected void engineInit(int mode, Key key, SecureRandom secureRandom) throws InvalidKeyException {
+        if (!(key instanceof SM2Key)) {
+            throw new InvalidKeyException("Invalid key type");
+        }
+        this.key = (SM2Key)key;
+        this.mode = mode;
+        this.random = (secureRandom != null) ? secureRandom : new SecureRandom();
+        // 初始化缓冲区
+        this.buffer = ByteBuffer.allocate(2048);
+    }
 
+    @Override
+    protected void engineInit(int mode, Key key, AlgorithmParameterSpec algorithmParameterSpec, SecureRandom secureRandom) throws InvalidKeyException, InvalidAlgorithmParameterException {
+        engineInit(mode, key, random);
     }
 
     @Override
     protected void engineInit(int i, Key key, AlgorithmParameters algorithmParameters, SecureRandom secureRandom) throws InvalidKeyException, InvalidAlgorithmParameterException {
-
+        engineInit(mode, key, random);
     }
 
     @Override
-    protected byte[] engineUpdate(byte[] bytes, int i, int i1) {
+    protected byte[] engineUpdate(byte[] input, int inputOffset, int inputLen) {
+        buffer.put(input, inputOffset, inputLen);
+        // 暂时不返回输出，等待 doFinal
         return new byte[0];
     }
 
     @Override
-    protected int engineUpdate(byte[] bytes, int i, int i1, byte[] bytes1, int i2) throws ShortBufferException {
+    protected int engineUpdate(byte[] input, int inputOffset, int inputLen, byte[] output, int outputOffset) throws ShortBufferException {
+        buffer.put(input, inputOffset, inputLen);
+        // 暂时不返回输出，等待 doFinal
         return 0;
     }
 
     @Override
-    protected byte[] engineDoFinal(byte[] bytes, int i, int i1) throws IllegalBlockSizeException, BadPaddingException {
-        return new byte[0];
+    protected byte[] engineDoFinal(byte[] input, int inputOffset, int inputLen) throws IllegalBlockSizeException, BadPaddingException {
+        buffer.put(input, inputOffset, inputLen);
+        byte[] data = new byte[buffer.position()];
+        buffer.flip();
+        buffer.get(data);
+
+        if (mode == Cipher.ENCRYPT_MODE) {
+            return encrypt(data);
+        } else if (mode == Cipher.DECRYPT_MODE) {
+            return decrypt(data);
+        } else {
+            throw new GmSSLException("Cipher not initialized properly");
+        }
     }
 
     @Override
-    protected int engineDoFinal(byte[] bytes, int i, int i1, byte[] bytes1, int i2) throws ShortBufferException, IllegalBlockSizeException, BadPaddingException {
-        return 0;
+    protected int engineDoFinal(byte[] input, int inputOffset, int inputLen, byte[] output, int outputOffset) throws ShortBufferException, IllegalBlockSizeException, BadPaddingException {
+        byte[] result = engineDoFinal(input, inputOffset, inputLen);
+        System.arraycopy(result, 0, output, outputOffset, result.length);
+        return result.length;
+    }
+
+    public byte[] encrypt(byte[] plaintext) {
+        if (this.key.sm2_key == 0) {
+            throw new GmSSLException("");
+        }
+        if (plaintext == null
+                || plaintext.length > this.key.MAX_PLAINTEXT_SIZE) {
+            throw new GmSSLException("");
+        }
+
+        byte[] ciphertext;
+        if ((ciphertext = GmSSLJNI.sm2_encrypt(this.key.sm2_key, plaintext)) == null) {
+            throw new GmSSLException("");
+        }
+        return ciphertext;
+    }
+
+    public byte[] decrypt(byte[] ciphertext) {
+        if (this.key.sm2_key == 0) {
+            throw new GmSSLException("");
+        }
+        if (this.key.has_private_key == false) {
+            throw new GmSSLException("");
+        }
+        if (ciphertext == null) {
+            throw new GmSSLException("");
+        }
+
+        byte[] plaintext;
+        if ((plaintext = GmSSLJNI.sm2_decrypt(this.key.sm2_key, ciphertext)) == null) {
+            throw new GmSSLException("");
+        }
+        return plaintext;
     }
 }

@@ -10,25 +10,21 @@ import java.security.Signature;
 /**
  * @author yongfeili
  * @date 2024/8/2
- * @description
+ * @description you must need to use openjdk!
+ * https://jdk.java.net/archive/
+ * https://stackoverflow.com/questions/1756801/how-to-sign-a-custom-jce-security-provider
  */
 public class MainTest {
 
     public static void main(String[] args) {
+        // 动态添加提供者
+        Security.addProvider(new org.gmssl.crypto.GmSSLProvider());
         SM2Test();
 
 
     }
 
     public static void SM2Test() {
-        // 动态添加提供者
-        Security.addProvider(new org.gmssl.crypto.GmSSLProvider());
-
-        // 打印所有已注册的提供者
-        for (java.security.Provider provider : Security.getProviders()) {
-            //System.out.println(provider.getName());
-        }
-
         // 尝试获取Cipher实例
         try {
             KeyPairGenerator keyPairGen = KeyPairGenerator.getInstance("SM2", "GmSSL");
@@ -39,11 +35,30 @@ public class MainTest {
             byte[] pri= keyPair.getPrivate().getEncoded();
             System.out.println(byteToHex(pri));
 
-            /*Cipher cipher = Cipher.getInstance("SM2", "GmSSLProvider");
+            Cipher cipher = Cipher.getInstance("SM2", "GmSSL");
+            // 测试加密
             cipher.init(Cipher.ENCRYPT_MODE, keyPair.getPublic());
+            byte[] plaintext = "Hello, GmSSL".getBytes();
+            byte[] ciphertext = cipher.doFinal(plaintext);
+            System.out.println("Ciphertext: " + byteToHex(ciphertext));
+            // 测试解密
+            cipher.init(Cipher.DECRYPT_MODE, keyPair.getPrivate());
+            byte[] decrypted = cipher.doFinal(ciphertext);
+            System.out.println("Decrypted: " + new String(decrypted));
 
-            Signature signature = Signature.getInstance("SM2", "GmSSLProvider");
-            signature.initSign(keyPair.getPrivate());*/
+
+            Signature signature = Signature.getInstance("SM2", "GmSSL");
+            // 测试签名
+            signature.initSign(keyPair.getPrivate());
+            byte[] signatureText = "Hello, GmSSL".getBytes();
+            signature.update(signatureText);
+            byte[] signatureByte = signature.sign();
+            System.out.println("Signature:"+byteToHex(signatureByte));
+            // 测试验签
+            signature.initVerify(keyPair.getPublic());
+            signature.update(signatureText);
+            boolean signatureResult = signature.verify(signatureByte);
+            System.out.println("SignatureResult:"+signatureResult);
         } catch (Exception e) {
             e.printStackTrace();
         }

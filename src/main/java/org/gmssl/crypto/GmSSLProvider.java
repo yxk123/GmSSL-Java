@@ -1,5 +1,6 @@
 package org.gmssl.crypto;
 
+import java.security.PrivilegedAction;
 import java.security.Provider;
 
 /**
@@ -9,21 +10,13 @@ import java.security.Provider;
  */
 public class GmSSLProvider extends Provider {
 
-    protected GmSSLProvider() {
-        super("GmSSL", 1.0, "GmSSL Provider v1.0");
+    public GmSSLProvider() {
+        super("GmSSL", "3.1.1", "GmSSL Provider");
 
-        // 注册Cipher
         put("Cipher.SM2", "org.gmssl.crypto.SM2Cipher");
-
-        // 注册KeyPairGenerator
-        put("KeyPairGenerator.SM2", "org.gmssl.crypto.SM2KeyPairGenerator");
-
-        // 注册KeyFactory
         put("KeyFactory.SM2", "org.gmssl.crypto.SM2KeyFactory");
-
-        // 注册Signature
+        put("KeyPairGenerator.SM2", "org.gmssl.crypto.SM2KeyPairGenerator");
         put("Signature.SM2", "org.gmssl.crypto.SM2Signature");
-
     }
 
 
