@@ -1,6 +1,7 @@
 package org.gmssl.crypto;
 
 import javax.crypto.Cipher;
+import javax.crypto.spec.PBEParameterSpec;
 import java.math.BigInteger;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -46,7 +47,7 @@ public class MainTest {
             byte[] decrypted = cipher.doFinal(ciphertext);
             System.out.println("Decrypted: " + new String(decrypted));
 
-
+            // 测试签名验签
             Signature signature = Signature.getInstance("SM2", "GmSSL");
             // 测试签名
             signature.initSign(keyPair.getPrivate());
@@ -59,6 +60,23 @@ public class MainTest {
             signature.update(signatureText);
             boolean signatureResult = signature.verify(signatureByte);
             System.out.println("SignatureResult:"+signatureResult);
+
+            //测试导入私钥公钥签名验签
+            Signature signatureImport = Signature.getInstance("SM2", "GmSSL");
+            // 测试导入私钥
+            String privateKeyInfoHex="308193020100301306072a8648ce3d020106082a811ccf5501822d0479307702010104207fef3e258348873c47117c15093266e9dad99e131f1778e53d362b2b70649f85a00a06082a811ccf5501822da14403420004f94c0abb6cd00c6f0918cb9c54162213501d5cc278f5d3fcf63886f4e1dc6322b1b110e33a25216f258c4cce5fd52ab320d3b086ee5390f7387218c92578c3ab";
+            byte[] privateKeyInfo = hexToByte(privateKeyInfoHex);
+            signatureImport.initSign(new SM2PrivateKey(privateKeyInfo));
+            signatureImport.update(signatureText);
+            byte[] signatureByteImport = signatureImport.sign();
+            System.out.println("Signature:"+byteToHex(signatureByteImport));
+            // 测试导入公钥
+            String publicKeyInfoHex = "3059301306072a8648ce3d020106082a811ccf5501822d03420004f94c0abb6cd00c6f0918cb9c54162213501d5cc278f5d3fcf63886f4e1dc6322b1b110e33a25216f258c4cce5fd52ab320d3b086ee5390f7387218c92578c3ab";
+            byte[] publicKeyInfo = hexToByte(publicKeyInfoHex);
+            signatureImport.initVerify(new SM2PublicKey(publicKeyInfo));
+            signatureImport.update(signatureText);
+            boolean signatureResultImport = signatureImport.verify(signatureByteImport);
+            System.out.println("SignatureResult:"+signatureResultImport);
         } catch (Exception e) {
             e.printStackTrace();
         }

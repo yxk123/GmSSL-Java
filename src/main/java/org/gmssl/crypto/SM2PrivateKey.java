@@ -16,8 +16,12 @@ public class SM2PrivateKey extends SM2Key implements PrivateKey{
         super();
     }
 
-    public SM2PrivateKey(long sm2_key) {
-        super(sm2_key, true);
+    public SM2PrivateKey(byte[] der) {
+        importPrivateKeyInfoDer(der);
+    }
+
+    public SM2PrivateKey(String password, String file) {
+        importEncryptedPrivateKeyInfoPem(password, file);
     }
 
     public SM2PrivateKey(long sm2_key, boolean has_private_key) {
@@ -38,6 +42,19 @@ public class SM2PrivateKey extends SM2Key implements PrivateKey{
         return exportPrivateKeyInfoDer();
     }
 
+    private void importPrivateKeyInfoDer(byte[] der) {
+        if (der == null) {
+            throw new GmSSLException("");
+        }
+        if (this.sm2_key != 0) {
+            GmSSLJNI.sm2_key_free(this.sm2_key);
+        }
+        if ((this.sm2_key = GmSSLJNI.sm2_private_key_info_from_der(der)) == 0) {
+            throw new GmSSLException("");
+        }
+        this.has_private_key = true;
+    }
+
     private byte[] exportPrivateKeyInfoDer() {
         if (this.sm2_key == 0) {
             throw new GmSSLException("");
@@ -50,6 +67,28 @@ public class SM2PrivateKey extends SM2Key implements PrivateKey{
             throw new GmSSLException("");
         }
         return der;
+    }
+
+    private void importEncryptedPrivateKeyInfoPem(String pass, String file) {
+        if (this.sm2_key != 0) {
+            GmSSLJNI.sm2_key_free(this.sm2_key);
+        }
+        if ((sm2_key = GmSSLJNI.sm2_private_key_info_decrypt_from_pem(pass, file)) == 0) {
+            throw new GmSSLException("");
+        }
+        this.has_private_key = true;
+    }
+
+    public void exportEncryptedPrivateKeyInfoPem(String pass, String file) {
+        if (this.sm2_key == 0) {
+            throw new GmSSLException("");
+        }
+        if (this.has_private_key == false) {
+            throw new GmSSLException("");
+        }
+        if (GmSSLJNI.sm2_private_key_info_encrypt_to_pem(this.sm2_key, pass, file) != 1) {
+            throw new GmSSLException("");
+        }
     }
 
 }

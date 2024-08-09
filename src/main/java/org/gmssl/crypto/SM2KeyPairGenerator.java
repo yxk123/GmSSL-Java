@@ -4,6 +4,7 @@ import org.gmssl.GmSSLException;
 import org.gmssl.GmSSLJNI;
 
 import java.security.*;
+import java.security.spec.AlgorithmParameterSpec;
 
 /**
  * @author yongfeili
@@ -36,4 +37,5 @@ public class SM2KeyPairGenerator extends KeyPairGeneratorSpi {
         }
         this.has_private_key = true;
     }
+
 }
