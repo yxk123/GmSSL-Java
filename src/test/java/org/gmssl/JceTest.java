@@ -38,6 +38,11 @@ public class JceTest {
             byte[] pri= keyPair.getPrivate().getEncoded();
             System.out.println(byteToHex(pri));
 
+            //测试“Z值”哈希值
+            SM2PublicKey sm2PublicKey = new SM2PublicKey(pub);
+            byte[] zHash = sm2PublicKey.computeZ("Hello, GmSSL");
+            System.out.println("zHash："+byteToHex(zHash));
+
             Cipher cipher = Cipher.getInstance("SM2", "GmSSL");
             // 测试加密
             cipher.init(Cipher.ENCRYPT_MODE, keyPair.getPublic());

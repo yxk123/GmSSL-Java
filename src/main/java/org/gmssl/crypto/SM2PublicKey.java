@@ -2,6 +2,7 @@ package org.gmssl.crypto;
 
 import org.gmssl.GmSSLException;
 import org.gmssl.GmSSLJNI;
+import org.gmssl.Sm3;
 
 import java.security.PublicKey;
 
@@ -84,6 +85,17 @@ public class SM2PublicKey extends SM2Key implements PublicKey{
         if (GmSSLJNI.sm2_public_key_info_to_pem(this.sm2_key, file) != 1) {
             throw new GmSSLException("");
         }
+    }
+
+    public byte[] computeZ(String id) {
+        if (this.sm2_key == 0) {
+            throw new GmSSLException("");
+        }
+        byte[] z = new byte[Sm3.DIGEST_SIZE];
+        if (GmSSLJNI.sm2_compute_z(this.sm2_key, id, z) != 1) {
+            throw new GmSSLException("");
+        }
+        return z;
     }
 
 }
