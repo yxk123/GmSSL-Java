@@ -12,7 +12,7 @@ import java.security.PublicKey;
  */
 public class SM2PublicKey extends SM2Key implements PublicKey{
 
-    public SM2PublicKey() {
+    protected SM2PublicKey() {
         super();
     }
 
@@ -24,7 +24,7 @@ public class SM2PublicKey extends SM2Key implements PublicKey{
         importPublicKeyInfoPem(file);
     }
 
-    public SM2PublicKey(long sm2_key, boolean has_private_key) {
+    protected SM2PublicKey(long sm2_key, boolean has_private_key) {
         super(sm2_key,has_private_key);
     }
 
@@ -43,7 +43,7 @@ public class SM2PublicKey extends SM2Key implements PublicKey{
         return exportPublicKeyInfoDer();
     }
 
-    private void importPublicKeyInfoDer(byte[] der) {
+    public void importPublicKeyInfoDer(byte[] der) {
         if (der == null) {
             throw new GmSSLException("");
         }
@@ -56,7 +56,7 @@ public class SM2PublicKey extends SM2Key implements PublicKey{
         this.has_private_key = false;
     }
 
-    private byte[] exportPublicKeyInfoDer() {
+    public byte[] exportPublicKeyInfoDer() {
         if (this.sm2_key == 0) {
             throw new GmSSLException("");
         }
@@ -67,7 +67,7 @@ public class SM2PublicKey extends SM2Key implements PublicKey{
         return der;
     }
 
-    private void importPublicKeyInfoPem(String file) {
+    public void importPublicKeyInfoPem(String file) {
         if (this.sm2_key != 0) {
             GmSSLJNI.sm2_key_free(this.sm2_key);
         }

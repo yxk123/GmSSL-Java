@@ -12,7 +12,7 @@ import java.security.PrivateKey;
  */
 public class SM2PrivateKey extends SM2Key implements PrivateKey{
 
-    public SM2PrivateKey() {
+    protected SM2PrivateKey() {
         super();
     }
 
@@ -24,7 +24,7 @@ public class SM2PrivateKey extends SM2Key implements PrivateKey{
         importEncryptedPrivateKeyInfoPem(password, file);
     }
 
-    public SM2PrivateKey(long sm2_key, boolean has_private_key) {
+    protected SM2PrivateKey(long sm2_key, boolean has_private_key) {
         super(sm2_key,has_private_key);
     }
 
@@ -42,7 +42,7 @@ public class SM2PrivateKey extends SM2Key implements PrivateKey{
         return exportPrivateKeyInfoDer();
     }
 
-    private void importPrivateKeyInfoDer(byte[] der) {
+    public void importPrivateKeyInfoDer(byte[] der) {
         if (der == null) {
             throw new GmSSLException("");
         }
@@ -55,7 +55,7 @@ public class SM2PrivateKey extends SM2Key implements PrivateKey{
         this.has_private_key = true;
     }
 
-    private byte[] exportPrivateKeyInfoDer() {
+    public byte[] exportPrivateKeyInfoDer() {
         if (this.sm2_key == 0) {
             throw new GmSSLException("");
         }
@@ -69,7 +69,7 @@ public class SM2PrivateKey extends SM2Key implements PrivateKey{
         return der;
     }
 
-    private void importEncryptedPrivateKeyInfoPem(String pass, String file) {
+    public void importEncryptedPrivateKeyInfoPem(String pass, String file) {
         if (this.sm2_key != 0) {
             GmSSLJNI.sm2_key_free(this.sm2_key);
         }

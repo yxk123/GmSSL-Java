@@ -4,8 +4,6 @@ import org.gmssl.GmSSLException;
 import org.gmssl.GmSSLJNI;
 
 import java.security.*;
-import java.security.spec.AlgorithmParameterSpec;
-
 /**
  * @author yongfeili
  * @date 2024/8/2

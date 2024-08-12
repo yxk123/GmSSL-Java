@@ -14,13 +14,15 @@ public abstract class SM2Key implements Key {
 
     public final static int MAX_PLAINTEXT_SIZE = GmSSLJNI.SM2_MAX_PLAINTEXT_SIZE;
 
-    protected long sm2_key = 0;
-    protected boolean has_private_key = false;
+    protected long sm2_key;
+    protected boolean has_private_key;
 
-    public SM2Key() {
+    protected SM2Key() {
+        this.sm2_key = 0;
+        this.has_private_key = false;
     }
 
-    public SM2Key(long sm2_key, boolean has_private_key) {
+    protected SM2Key(long sm2_key, boolean has_private_key) {
         this.sm2_key = sm2_key;
         this.has_private_key = has_private_key;
     }

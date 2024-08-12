@@ -1,4 +1,7 @@
-package org.gmssl.crypto;
+package org.gmssl;
+
+import org.gmssl.crypto.SM2PrivateKey;
+import org.gmssl.crypto.SM2PublicKey;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.PBEParameterSpec;
@@ -15,13 +18,12 @@ import java.security.Signature;
  * https://jdk.java.net/archive/
  * https://stackoverflow.com/questions/1756801/how-to-sign-a-custom-jce-security-provider
  */
-public class MainTest {
+public class JceTest {
 
     public static void main(String[] args) {
         // 动态添加提供者
         Security.addProvider(new org.gmssl.crypto.GmSSLProvider());
         SM2Test();
-
 
     }
 
