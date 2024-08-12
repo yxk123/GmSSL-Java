@@ -1,4 +1,4 @@
-package org.gmssl.crypto;
+package org.gmssl.crypto.asymmetric;
 
 import org.gmssl.GmSSLException;
 import org.gmssl.GmSSLJNI;

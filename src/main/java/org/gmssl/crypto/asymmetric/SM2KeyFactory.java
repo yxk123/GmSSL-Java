@@ -1,4 +1,4 @@
-package org.gmssl.crypto;
+package org.gmssl.crypto.asymmetric;
 
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;

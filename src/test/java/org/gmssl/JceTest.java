@@ -1,15 +1,17 @@
 package org.gmssl;
 
-import org.gmssl.crypto.SM2PrivateKey;
-import org.gmssl.crypto.SM2PublicKey;
+import org.gmssl.crypto.asymmetric.SM2PrivateKey;
+import org.gmssl.crypto.asymmetric.SM2PublicKey;
+import org.gmssl.crypto.digest.SM3Pbkdf2;
 
 import javax.crypto.Cipher;
-import javax.crypto.spec.PBEParameterSpec;
+import javax.crypto.Mac;
+import javax.crypto.SecretKey;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
+import javax.crypto.spec.SecretKeySpec;
 import java.math.BigInteger;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.Security;
-import java.security.Signature;
+import java.security.*;
 
 /**
  * @author yongfeili
@@ -23,8 +25,9 @@ public class JceTest {
     public static void main(String[] args) {
         // 动态添加提供者
         Security.addProvider(new org.gmssl.crypto.GmSSLProvider());
-        SM2Test();
-
+        //SM2Test();
+        //SM3Test();
+        SM4Test();
     }
 
     public static void SM2Test() {
@@ -87,6 +90,56 @@ public class JceTest {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public static void SM3Test() {
+        try {
+            String text="Hello, GmSSL";
+            //测试SM3哈希
+            MessageDigest sm3Digest = MessageDigest.getInstance("SM3","GmSSL");
+            sm3Digest.update("abc".getBytes());
+            byte[] digest = sm3Digest.digest();
+            sm3Digest.reset();
+            sm3Digest.update(text.getBytes());
+            System.out.println("digest:"+byteToHex(digest));
+
+            //基于SM3的HMAC消息认证码算法
+            Mac hmac = Mac.getInstance("SM3Hmac", "GmSSL");
+            hmac.init(new SecretKeySpec(new Random().randBytes(Sm3Hmac.MAC_SIZE), "SM3Hmac"));
+            hmac.update(text.getBytes());
+            byte[] hmacFinal = hmac.doFinal();
+            System.out.println("hmac:"+byteToHex(hmacFinal));
+
+            //基于口令的密钥导出函数PBKDF2
+            char[] password = "P@ssw0rd".toCharArray();
+            byte[] salt = new Random().randBytes(SM3Pbkdf2.DEFAULT_SALT_SIZE);
+            int iterations = SM3Pbkdf2.MIN_ITER * 2;
+            int keyLength = SM3Pbkdf2.MAX_KEY_SIZE;
+            PBEKeySpec spec = new PBEKeySpec(password, salt, iterations, keyLength);
+            SecretKeyFactory skf = SecretKeyFactory.getInstance("SM3Pbkdf2");
+            SecretKey key = skf.generateSecret(spec);
+            byte[] keyBytes = key.getEncoded();
+            System.out.println("DerivedKey: " + byteToHex(keyBytes));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void SM4Test() {
+        try {
+            SecureRandom secureRandom = SecureRandom.getInstance("Random", "GmSSL");
+            byte[] randomBytes = new byte[32];
+            secureRandom.nextBytes(randomBytes);
+            System.out.println("Generated Random Bytes: " + byteToHex(randomBytes));
+
+            Cipher sm4Cipher = Cipher.getInstance("SM4/CBC/PKCS5Padding", "GmSSL");
+
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+
     }
 
     /**

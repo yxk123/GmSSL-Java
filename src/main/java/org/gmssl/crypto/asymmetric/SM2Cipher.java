@@ -1,4 +1,4 @@
-package org.gmssl.crypto;
+package org.gmssl.crypto.asymmetric;
 
 import org.gmssl.GmSSLException;
 import org.gmssl.GmSSLJNI;
@@ -88,7 +88,7 @@ public class SM2Cipher extends CipherSpi {
     protected byte[] engineUpdate(byte[] input, int inputOffset, int inputLen) {
         buffer.put(input, inputOffset, inputLen);
         // 暂时不返回输出，等待 doFinal
-        return new byte[0];
+        return buffer.array();
     }
 
     @Override
