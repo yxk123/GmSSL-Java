@@ -13,7 +13,7 @@ public abstract class SM9UserKey implements KeySpec {
 
     protected String id;
 
-    public SM9PrivateKey privateKey;
+    protected SM9PrivateKey privateKey;
 
     protected SM9UserKey(long key, String id) {
         this.sm9_key = key;
@@ -22,5 +22,9 @@ public abstract class SM9UserKey implements KeySpec {
 
     public String getId() {
         return this.id;
+    }
+
+    public SM9PrivateKey getPrivateKey() {
+        return this.privateKey;
     }
 }

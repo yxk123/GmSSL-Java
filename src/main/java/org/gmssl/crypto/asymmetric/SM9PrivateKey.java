@@ -25,7 +25,7 @@ public abstract class SM9PrivateKey implements PrivateKey {
         return new byte[0];
     }
 
-    public abstract KeySpec getOuterKey();
+    public abstract KeySpec getSecretKey();
 
     public abstract void importEncryptedPrivateKeyInfoPem(String pass, String file);
 

@@ -43,7 +43,7 @@ public class SM9SignUserKey extends SM9UserKey{
             return signature;
         }
 
-        public SM9SignUserKey getOuterKey() {
+        public SM9SignUserKey getSecretKey() {
             return SM9SignUserKey.this;
         }
 

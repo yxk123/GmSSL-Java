@@ -61,7 +61,7 @@ public class SM9Cipher extends CipherSpi {
         this.opmode = opmode;
         this.key = key;
         SM9PrivateKey privateKey = (SM9PrivateKey)key;
-        SM9UserKey userKey = (SM9UserKey)privateKey.getOuterKey();
+        SM9UserKey userKey = (SM9UserKey)privateKey.getSecretKey();
         this.id = userKey.getId();
         // 初始化缓冲区
         this.buffer = ByteBuffer.allocate(2048);

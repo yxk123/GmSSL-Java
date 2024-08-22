@@ -86,7 +86,7 @@ public class SM9EncMasterKey extends SM9MasterKey{
             }
         }
 
-        public SM9EncMasterKey getOuterKey() {
+        public SM9EncMasterKey getSecretKey() {
             return SM9EncMasterKey.this;
         }
 
@@ -102,7 +102,7 @@ public class SM9EncMasterKey extends SM9MasterKey{
         has_private_key = true;
     }
 
-    public long getOuterKey() {
+    public long getSecretKey() {
         if (master_key == 0) {
             throw new GmSSLException("");
         }

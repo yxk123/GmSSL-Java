@@ -235,9 +235,9 @@ public class JceTest {
         System.out.println("Ciphertext: " + byteToHex(ciphertext));
 
         SM9PrivateKey privateKey= (SM9PrivateKey) keyPairGen.genKeyPair().getPrivate();
-        SM9MasterKey masterKey = (SM9MasterKey)privateKey.getOuterKey();
+        SM9MasterKey masterKey = (SM9MasterKey)privateKey.getSecretKey();
         SM9UserKey userKey= masterKey.extractKey(sm9EncMasterKeyGenParameterSpec.getId());
-        sm9Cipher.init(Cipher.DECRYPT_MODE, userKey.privateKey);
+        sm9Cipher.init(Cipher.DECRYPT_MODE, userKey.getPrivateKey());
         byte[] plaintext = sm9Cipher.doFinal(ciphertext);
         System.out.println("plaintext: " + new String(plaintext));
     }
@@ -253,9 +253,9 @@ public class JceTest {
         Signature signature = Signature.getInstance("SM9", "GmSSL");
         // 测试签名
         SM9PrivateKey privateKey= (SM9PrivateKey) keyPairGen.genKeyPair().getPrivate();
-        SM9MasterKey masterKey = (SM9MasterKey)privateKey.getOuterKey();
+        SM9MasterKey masterKey = (SM9MasterKey)privateKey.getSecretKey();
         SM9UserKey userKey= masterKey.extractKey(sm9SignMasterKeyGenParameterSpec.getId());
-        signature.initSign(userKey.privateKey);
+        signature.initSign(userKey.getPrivateKey());
         byte[] signatureText = text.getBytes();
         signature.update(signatureText);
         byte[] signatureByte = signature.sign();

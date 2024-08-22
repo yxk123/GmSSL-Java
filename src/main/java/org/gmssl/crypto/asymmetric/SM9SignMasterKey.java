@@ -78,7 +78,7 @@ public class SM9SignMasterKey extends SM9MasterKey{
             }
         }
 
-        public SM9SignMasterKey getOuterKey() {
+        public SM9SignMasterKey getSecretKey() {
             return SM9SignMasterKey.this;
         }
 
@@ -93,7 +93,7 @@ public class SM9SignMasterKey extends SM9MasterKey{
         this.has_private_key = true;
     }
 
-    public long getOuterKey() {
+    public long getSecretKey() {
         if (this.master_key == 0) {
             throw new GmSSLException("");
         }

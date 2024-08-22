@@ -48,7 +48,7 @@ public class SM9EncUserKey extends SM9UserKey{
             }
             return plaintext;
         }
-        public SM9EncUserKey getOuterKey() {
+        public SM9EncUserKey getSecretKey() {
             return SM9EncUserKey.this;
         }
     }

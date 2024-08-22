@@ -14,14 +14,21 @@ public abstract class SM9MasterKey implements KeySpec {
 
     protected boolean has_private_key;
 
-    public SM9PublicKey publicKey;
+    protected SM9PublicKey publicKey;
 
-    public SM9PrivateKey privateKey;
+    protected SM9PrivateKey privateKey;
 
     public abstract void generateMasterKey();
 
-    public abstract long getOuterKey();
+    public abstract long getSecretKey();
 
     public abstract SM9UserKey extractKey(String id);
 
+    public SM9PublicKey getPublicKey() {
+        return this.publicKey;
+    }
+
+    public SM9PrivateKey getPrivateKey() {
+        return this.privateKey;
+    }
 }
