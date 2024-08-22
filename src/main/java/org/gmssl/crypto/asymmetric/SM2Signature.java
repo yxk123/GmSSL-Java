@@ -21,7 +21,6 @@ public class SM2Signature extends SignatureSpi {
 
     public SM2Signature() {
         super();
-        init();
     }
 
     @Override
@@ -30,6 +29,7 @@ public class SM2Signature extends SignatureSpi {
         if (!(publicKey instanceof SM2PublicKey)) {
             throw new GmSSLException("Invalid publicKey type");
         }
+        init();
         initVerify((SM2PublicKey) publicKey,DEFAULT_ID);
     }
 
@@ -39,19 +39,18 @@ public class SM2Signature extends SignatureSpi {
         if (!(privateKey instanceof SM2PrivateKey)) {
             throw new GmSSLException("Invalid privateKey type");
         }
+        init();
         initSign((SM2PrivateKey) privateKey,DEFAULT_ID);
     }
 
     @Override
     protected void engineUpdate(byte b) throws SignatureException {
-        // 实现更新方法
         byte[] data= new byte[]{b};
         update(data, 0, data.length);
     }
 
     @Override
     protected void engineUpdate(byte[] b, int off, int len) throws SignatureException {
-        // 实现更新方法
         update(b, off, len);
     }
 
@@ -137,6 +136,7 @@ public class SM2Signature extends SignatureSpi {
         if ((sig = GmSSLJNI.sm2_sign_finish(this.sm2_sign_ctx)) == null) {
             throw new GmSSLException("");
         }
+        this.inited = false;
         return sig;
     }
 
@@ -147,7 +147,7 @@ public class SM2Signature extends SignatureSpi {
         if (this.do_sign == true) {
             throw new GmSSLException("");
         }
-
+        this.inited = false;
         int ret;
         if ((ret = GmSSLJNI.sm2_verify_finish(sm2_sign_ctx, signature)) != 1) {
             return false;

@@ -1,17 +1,18 @@
 package org.gmssl;
 
-import org.gmssl.crypto.asymmetric.SM2PrivateKey;
-import org.gmssl.crypto.asymmetric.SM2PublicKey;
+import org.gmssl.crypto.asymmetric.*;
 import org.gmssl.crypto.digest.SM3Pbkdf2;
+import org.gmssl.crypto.symmetric.*;
+import org.junit.Before;
+import org.junit.Test;
 
-import javax.crypto.Cipher;
-import javax.crypto.Mac;
-import javax.crypto.SecretKey;
-import javax.crypto.SecretKeyFactory;
+import javax.crypto.*;
+import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.math.BigInteger;
 import java.security.*;
+import java.util.Arrays;
 
 /**
  * @author yongfeili
@@ -22,12 +23,17 @@ import java.security.*;
  */
 public class JceTest {
 
-    public static void main(String[] args) {
+    @Before
+    public void beforeTest(){
+        Security.addProvider(new org.gmssl.crypto.GmSSLProvider());
+    }
+
+    public static void main(String[] args) throws NoSuchPaddingException, NoSuchAlgorithmException, NoSuchProviderException {
         // 动态添加提供者
         Security.addProvider(new org.gmssl.crypto.GmSSLProvider());
-        //SM2Test();
+        SM2Test();
         //SM3Test();
-        SM4Test();
+        //SM4Test();
     }
 
     public static void SM2Test() {
@@ -127,20 +133,142 @@ public class JceTest {
 
     public static void SM4Test() {
         try {
+            String text="Hello, GmSSL";
             SecureRandom secureRandom = SecureRandom.getInstance("Random", "GmSSL");
             byte[] randomBytes = new byte[32];
             secureRandom.nextBytes(randomBytes);
             System.out.println("Generated Random Bytes: " + byteToHex(randomBytes));
 
-            Cipher sm4Cipher = Cipher.getInstance("SM4/CBC/PKCS5Padding", "GmSSL");
+            /*// 测试SM4加密，固定16个长度
+            Cipher sm4Cipher = Cipher.getInstance("SM4", "GmSSL");
+            SecretKeySpec sm4Key = new SecretKeySpec(secureRandom.generateSeed(SM4.KEY_SIZE), "SM4");
+            sm4Cipher.init(Cipher.ENCRYPT_MODE, sm4Key);
+            sm4Cipher.update("87654321".getBytes(),0, 8);
+            byte[] ciphertext = sm4Cipher.doFinal("12345678".getBytes(), 0, 8);
+            System.out.println("Ciphertext: " + byteToHex(ciphertext));
+            // 测试SM4解密
+            sm4Cipher.init(Cipher.DECRYPT_MODE, sm4Key);
+            byte[] plaintext = sm4Cipher.doFinal(ciphertext, 0, 16);
+            System.out.println("plaintext: " + new String(plaintext));*/
 
+            Cipher sm4cbcCipher = Cipher.getInstance("SM4/CBC/PKCS5Padding", "GmSSL");
+            byte[] key = secureRandom.generateSeed(SM4CBC.KEY_SIZE);
+            byte[] iv = secureRandom.generateSeed(SM4CBC.IV_SIZE);
+            sm4cbcCipher.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(key, "SM4"), new IvParameterSpec(iv));
+            byte[] plaintext = ("text:"+text).getBytes();
+            int inputOffset = "text:".getBytes().length;
+            int inputLen = plaintext.length - inputOffset;
+            byte[] ciphertext = new byte[inputLen+SM4CBC.BLOCK_SIZE];
+            //int test= sm4cbcCipher.update("abc".getBytes(), 0, 3, ciphertext, 0);
+            int cipherlen = sm4cbcCipher.doFinal(plaintext, inputOffset, inputLen,ciphertext, 0);
+            byte[] ciphertext1 = Arrays.copyOfRange(ciphertext,0,cipherlen);
+            System.out.println("Ciphertext: " + byteToHex(ciphertext1));
 
+            sm4cbcCipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(key, "SM4"), new IvParameterSpec(iv));
+            byte[] plaintext1 = new byte[ciphertext1.length + SM4CBC.BLOCK_SIZE];
+            int decryptedLen = sm4cbcCipher.doFinal(ciphertext1, 0,ciphertext1.length, plaintext1,0);
+            byte[] plaintext2 =Arrays.copyOfRange(plaintext1,0,decryptedLen);
+            String plaintextStr=new String(plaintext2);
+            System.out.println("plaintext: " + plaintextStr);
         } catch (Exception e) {
             e.printStackTrace();
         }
 
 
     }
+
+    @Test
+    public void SM4_CTR_test() throws Exception{
+            SecureRandom secureRandom = SecureRandom.getInstance("Random", "GmSSL");
+            Cipher sm4Cipher = Cipher.getInstance("SM4/CTR/NoPadding", "GmSSL");
+            byte[] key = secureRandom.generateSeed(SM4CTR.KEY_SIZE);
+            byte[] iv = secureRandom.generateSeed(SM4CTR.IV_SIZE);
+            sm4Cipher.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(key, "SM4"), new IvParameterSpec(iv));
+            byte[] ciphertext = new byte[64];
+            sm4Cipher.update("abc".getBytes(), 0, "abc".length(), ciphertext, 0);
+            sm4Cipher.update("12345678".getBytes(), 0, "12345678".length(), ciphertext, 0);
+            sm4Cipher.update("xxyyyzzz".getBytes(), 0, "xxyyyzzz".length(), ciphertext, 0);
+            int cipherlen = sm4Cipher.doFinal("gmssl".getBytes(), 0, "gmssl".length(), ciphertext, 0);
+            byte[] ciphertext1 = Arrays.copyOfRange(ciphertext,0,cipherlen);
+            System.out.println("Ciphertext: " + byteToHex(ciphertext1));
+
+            byte[] plaintext = new byte[64];
+            sm4Cipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(key, "SM4"), new IvParameterSpec(iv));
+            int plainlen = sm4Cipher.doFinal(ciphertext, 0, cipherlen, plaintext, 0);
+            byte[] plaintext1 = Arrays.copyOfRange(plaintext,0,plainlen);
+            System.out.println("plaintext: " + new String(plaintext1));
+    }
+
+    @Test
+    public void SM4_GCM_test() throws Exception {
+        SecureRandom secureRandom = SecureRandom.getInstance("Random", "GmSSL");
+        Cipher sm4Cipher = Cipher.getInstance("SM4/GCM/ZeroPadding", "GmSSL");
+        byte[] key = secureRandom.generateSeed(SM4CTR.KEY_SIZE);
+        byte[] iv = secureRandom.generateSeed(SM4CTR.IV_SIZE);
+        byte[] aad = "Hello: ".getBytes();
+        sm4Cipher.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(key, "SM4"), new AadAlgorithmParameters(SM4GCM.MAX_TAG_SIZE,iv,aad));
+        sm4Cipher.updateAAD(aad);
+        //TODO fix aad不需要专门建立参数
+        byte[] ciphertext = new byte[64];
+        int cipherlen = sm4Cipher.doFinal("abc".getBytes(), 0, 3, ciphertext, 0);
+        System.out.println("Ciphertext: " + byteToHex(ciphertext));
+
+        byte[] plaintext = new byte[64];
+        sm4Cipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(key, "SM4"), new AadAlgorithmParameters(SM4GCM.MAX_TAG_SIZE,iv,aad));
+        int plainlen =sm4Cipher.doFinal(ciphertext, 0, cipherlen, plaintext, 0);
+        byte[] plaintext1 = Arrays.copyOfRange(plaintext,0,plainlen);
+        System.out.println("plaintext: " + new String(plaintext1));
+    }
+
+    @Test
+    public void SM9_cipher_test() throws Exception{
+        String text="Hello, GmSSL";
+        SM9EncMasterKeyGenParameterSpec sm9EncMasterKeyGenParameterSpec = new SM9EncMasterKeyGenParameterSpec("bob");
+        KeyPairGenerator keyPairGen = KeyPairGenerator.getInstance("SM9", "GmSSL");
+        keyPairGen.initialize(sm9EncMasterKeyGenParameterSpec);
+        keyPairGen.generateKeyPair();
+
+        PublicKey publicKey = keyPairGen.genKeyPair().getPublic();
+        Cipher sm9Cipher = Cipher.getInstance("SM9", "GmSSL");
+        sm9Cipher.init(Cipher.ENCRYPT_MODE, publicKey,sm9EncMasterKeyGenParameterSpec);
+        byte[] ciphertext = sm9Cipher.doFinal(text.getBytes());
+        System.out.println("Ciphertext: " + byteToHex(ciphertext));
+
+        SM9PrivateKey privateKey= (SM9PrivateKey) keyPairGen.genKeyPair().getPrivate();
+        SM9MasterKey masterKey = (SM9MasterKey)privateKey.getOuterKey();
+        SM9UserKey userKey= masterKey.extractKey(sm9EncMasterKeyGenParameterSpec.getId());
+        sm9Cipher.init(Cipher.DECRYPT_MODE, userKey.privateKey);
+        byte[] plaintext = sm9Cipher.doFinal(ciphertext);
+        System.out.println("plaintext: " + new String(plaintext));
+    }
+
+    @Test
+    public void SM9_sign_test() throws Exception{
+        String text="Hello, GmSSL";
+        SM9SignMasterKeyGenParameterSpec sm9SignMasterKeyGenParameterSpec = new SM9SignMasterKeyGenParameterSpec("alice");
+        KeyPairGenerator keyPairGen = KeyPairGenerator.getInstance("SM9", "GmSSL");
+        keyPairGen.initialize(sm9SignMasterKeyGenParameterSpec);
+        keyPairGen.generateKeyPair();
+
+        Signature signature = Signature.getInstance("SM9", "GmSSL");
+        // 测试签名
+        SM9PrivateKey privateKey= (SM9PrivateKey) keyPairGen.genKeyPair().getPrivate();
+        SM9MasterKey masterKey = (SM9MasterKey)privateKey.getOuterKey();
+        SM9UserKey userKey= masterKey.extractKey(sm9SignMasterKeyGenParameterSpec.getId());
+        signature.initSign(userKey.privateKey);
+        byte[] signatureText = text.getBytes();
+        signature.update(signatureText);
+        byte[] signatureByte = signature.sign();
+        System.out.println("Signature:"+byteToHex(signatureByte));
+        // 测试验签
+        signature.setParameter(sm9SignMasterKeyGenParameterSpec);
+        PublicKey publicKey=  keyPairGen.genKeyPair().getPublic();
+        signature.initVerify(publicKey);
+        signature.update(signatureText);
+        boolean signatureResult = signature.verify(signatureByte);
+        System.out.println("SignatureResult:"+signatureResult);
+    }
+
 
     /**
      * convert byte array to hex string

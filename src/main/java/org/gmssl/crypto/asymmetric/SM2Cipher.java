@@ -95,7 +95,7 @@ public class SM2Cipher extends CipherSpi {
     protected int engineUpdate(byte[] input, int inputOffset, int inputLen, byte[] output, int outputOffset) throws ShortBufferException {
         buffer.put(input, inputOffset, inputLen);
         // 暂时不返回输出，等待 doFinal
-        return 0;
+        return output.length;
     }
 
     @Override
@@ -104,6 +104,7 @@ public class SM2Cipher extends CipherSpi {
         byte[] data = new byte[buffer.position()];
         buffer.flip();
         buffer.get(data);
+        buffer.clear();
 
         if (mode == Cipher.ENCRYPT_MODE) {
             return encrypt(data);

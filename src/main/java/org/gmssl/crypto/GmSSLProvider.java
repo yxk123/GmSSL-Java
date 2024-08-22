@@ -16,12 +16,16 @@ public class GmSSLProvider extends Provider {
         put("Cipher.SM2", "org.gmssl.crypto.asymmetric.SM2Cipher");
         put("KeyPairGenerator.SM2", "org.gmssl.crypto.asymmetric.SM2KeyPairGenerator");
         put("Signature.SM2", "org.gmssl.crypto.asymmetric.SM2Signature");
-        //put("KeyFactory.SM2", "org.gmssl.crypto.asymmetric.SM2KeyFactory");
+
         put("MessageDigest.SM3", "org.gmssl.crypto.digest.SM3Digest");
         put("Mac.SM3Hmac", "org.gmssl.crypto.digest.SM3Hmac");
         put("SecretKeyFactory.SM3Pbkdf2", "org.gmssl.crypto.digest.SM3Pbkdf2");
+
         put("Cipher.SM4", "org.gmssl.crypto.symmetric.SM4Cipher");
-        put("Cipher.SM4Cbc", "org.gmssl.crypto.symmetric.SM4Cbc");
+
+        put("Cipher.SM9", "org.gmssl.crypto.asymmetric.SM9Cipher");
+        put("Signature.SM9", "org.gmssl.crypto.asymmetric.SM9Signature");
+        put("KeyPairGenerator.SM9", "org.gmssl.crypto.asymmetric.SM9KeyPairGeneratorSpi");
     }
 
 

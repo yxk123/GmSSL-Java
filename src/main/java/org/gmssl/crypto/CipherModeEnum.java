@@ -5,7 +5,7 @@ package org.gmssl.crypto;
  * @date 2024/8/12
  * @description
  */
-public enum Mode {
+public enum CipherModeEnum {
     NONE,
     /**
      * Cipher Block Chaining
