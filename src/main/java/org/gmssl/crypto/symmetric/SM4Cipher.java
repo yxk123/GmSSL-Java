@@ -96,11 +96,7 @@ public class SM4Cipher extends CipherSpi {
 
     @Override
     protected void engineUpdateAAD(byte[] src, int offset, int len) {
-        super.engineUpdateAAD(src, offset, len);
+        sm4Engine.engineUpdateAAD(src, offset, len);
     }
 
-    @Override
-    protected void engineUpdateAAD(ByteBuffer src) {
-        super.engineUpdateAAD(src);
-    }
 }

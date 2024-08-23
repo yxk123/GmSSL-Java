@@ -62,6 +62,11 @@ public class SM4CTR extends SM4Engine {
         return outLen;
     }
 
+    @Override
+    protected void engineUpdateAAD(byte[] src, int offset, int len) {
+
+    }
+
 
     public void ctx(){
         if ((this.sm4_ctr_ctx = GmSSLJNI.sm4_ctr_ctx_new()) == 0) {

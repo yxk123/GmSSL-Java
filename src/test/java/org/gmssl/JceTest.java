@@ -7,6 +7,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import javax.crypto.*;
+import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
@@ -131,8 +132,8 @@ public class JceTest {
         }
     }
 
-    public static void SM4Test() {
-        try {
+    @Test
+    public void SM4_CBC_test() throws Exception{
             String text="Hello, GmSSL";
             SecureRandom secureRandom = SecureRandom.getInstance("Random", "GmSSL");
             byte[] randomBytes = new byte[32];
@@ -170,11 +171,6 @@ public class JceTest {
             byte[] plaintext2 =Arrays.copyOfRange(plaintext1,0,decryptedLen);
             String plaintextStr=new String(plaintext2);
             System.out.println("plaintext: " + plaintextStr);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-
     }
 
     @Test
@@ -201,20 +197,21 @@ public class JceTest {
 
     @Test
     public void SM4_GCM_test() throws Exception {
+        String text="Hello, GmSSL";
         SecureRandom secureRandom = SecureRandom.getInstance("Random", "GmSSL");
         Cipher sm4Cipher = Cipher.getInstance("SM4/GCM/ZeroPadding", "GmSSL");
-        byte[] key = secureRandom.generateSeed(SM4CTR.KEY_SIZE);
-        byte[] iv = secureRandom.generateSeed(SM4CTR.IV_SIZE);
+        byte[] key = secureRandom.generateSeed(SM4GCM.KEY_SIZE);
+        byte[] iv = secureRandom.generateSeed(SM4GCM.DEFAULT_IV_SIZE);
         byte[] aad = "Hello: ".getBytes();
-        sm4Cipher.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(key, "SM4"), new AadAlgorithmParameters(SM4GCM.MAX_TAG_SIZE,iv,aad));
+        sm4Cipher.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(key, "SM4"), new GCMParameterSpec(SM4GCM.MAX_TAG_SIZE,iv));
         sm4Cipher.updateAAD(aad);
-        //TODO fix aad不需要专门建立参数
         byte[] ciphertext = new byte[64];
-        int cipherlen = sm4Cipher.doFinal("abc".getBytes(), 0, 3, ciphertext, 0);
+        int cipherlen = sm4Cipher.doFinal(text.getBytes(), 0, text.getBytes().length, ciphertext, 0);
         System.out.println("Ciphertext: " + byteToHex(ciphertext));
 
         byte[] plaintext = new byte[64];
-        sm4Cipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(key, "SM4"), new AadAlgorithmParameters(SM4GCM.MAX_TAG_SIZE,iv,aad));
+        sm4Cipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(key, "SM4"), new GCMParameterSpec(SM4GCM.MAX_TAG_SIZE,iv));
+        sm4Cipher.updateAAD(aad);
         int plainlen =sm4Cipher.doFinal(ciphertext, 0, cipherlen, plaintext, 0);
         byte[] plaintext1 = Arrays.copyOfRange(plaintext,0,plainlen);
         System.out.println("plaintext: " + new String(plaintext1));

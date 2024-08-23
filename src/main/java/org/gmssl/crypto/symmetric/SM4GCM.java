@@ -7,6 +7,9 @@ import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.ShortBufferException;
+import javax.crypto.spec.GCMParameterSpec;
+import javax.crypto.spec.IvParameterSpec;
+import java.nio.ByteBuffer;
 import java.security.Key;
 import java.security.SecureRandom;
 import java.security.spec.AlgorithmParameterSpec;
@@ -30,6 +33,12 @@ public class SM4GCM extends SM4Engine {
 
     private byte[] iv;
 
+    private byte[] aad;
+
+    private Key key;
+
+    private int tLen;
+
     private int offset;
 
     public SM4GCM(){
@@ -39,15 +48,13 @@ public class SM4GCM extends SM4Engine {
 
     @Override
     protected void engineInit(int opmode, Key key, AlgorithmParameterSpec params, SecureRandom random) {
-        if (!(params instanceof AadAlgorithmParameters)){
-            throw new GmSSLException("need the AadAlgorithmParameters parameter");
+        if (!(params instanceof GCMParameterSpec)) {
+            throw new GmSSLException("need the GCMParameterSpec parameter");
         }
-        this.iv = ((AadAlgorithmParameters) params).getIV();
-        int tLen = ((AadAlgorithmParameters) params).getTLen();
-        byte[] aad = ((AadAlgorithmParameters) params).getAad();
-
+        this.key = key;
+        this.iv = ((GCMParameterSpec) params).getIV();
+        this.tLen = ((GCMParameterSpec) params).getTLen();
         this.do_encrypt = (opmode == Cipher.ENCRYPT_MODE);
-        init(key.getEncoded(), iv,aad, tLen, do_encrypt);
     }
 
     @Override
@@ -69,6 +76,14 @@ public class SM4GCM extends SM4Engine {
         outLen = outLen + this.offset;
         this.offset = 0;
         return outLen;
+    }
+
+    @Override
+    protected void engineUpdateAAD(byte[] src, int offset, int len) {
+        this.aad = new byte[len];
+        System.arraycopy(src, offset, this.aad, 0, len);
+
+        init(key.getEncoded(), iv,aad,tLen, do_encrypt);
     }
 
     private void ctx(){

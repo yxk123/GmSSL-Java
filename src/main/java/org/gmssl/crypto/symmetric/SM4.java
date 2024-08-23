@@ -78,6 +78,8 @@ public class SM4 extends SM4Cipher {
         return output.length;
     }
 
+
+
     private void init(){
         if ((sm4_key = GmSSLJNI.sm4_key_new()) == 0) {
             throw new GmSSLException("");

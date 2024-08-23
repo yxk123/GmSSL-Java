@@ -5,6 +5,7 @@ import org.gmssl.GmSSLJNI;
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.ShortBufferException;
+import java.nio.ByteBuffer;
 import java.security.Key;
 import java.security.SecureRandom;
 import java.security.spec.AlgorithmParameterSpec;
@@ -27,6 +28,8 @@ public abstract class SM4Engine {
     protected abstract int engineUpdate(byte[] input, int inputOffset, int inputLen, byte[] output, int outputOffset) throws ShortBufferException;
 
     protected abstract int engineDoFinal(byte[] input, int inputOffset, int inputLen, byte[] output, int outputOffset) throws ShortBufferException, IllegalBlockSizeException, BadPaddingException;
+
+    protected abstract void engineUpdateAAD(byte[] src, int offset, int len);
 
     //String getAlgorithmName();
 

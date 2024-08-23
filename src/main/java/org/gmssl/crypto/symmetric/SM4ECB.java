@@ -32,4 +32,9 @@ public class SM4ECB extends SM4Engine {
     protected int engineDoFinal(byte[] input, int inputOffset, int inputLen, byte[] output, int outputOffset) throws ShortBufferException, IllegalBlockSizeException, BadPaddingException {
         return 0;
     }
+
+    @Override
+    protected void engineUpdateAAD(byte[] src, int offset, int len) {
+
+    }
 }

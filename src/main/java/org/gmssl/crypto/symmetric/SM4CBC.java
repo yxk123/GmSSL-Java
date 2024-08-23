@@ -70,6 +70,11 @@ public class SM4CBC extends SM4Engine {
         return outLen;
     }
 
+    @Override
+    protected void engineUpdateAAD(byte[] src, int offset, int len) {
+
+    }
+
     private void ctx() {
         if ((this.sm4_cbc_ctx = GmSSLJNI.sm4_cbc_ctx_new()) == 0) {
             throw new GmSSLException("");
