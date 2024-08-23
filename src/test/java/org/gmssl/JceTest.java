@@ -29,17 +29,8 @@ public class JceTest {
         Security.addProvider(new org.gmssl.crypto.GmSSLProvider());
     }
 
-    public static void main(String[] args) throws NoSuchPaddingException, NoSuchAlgorithmException, NoSuchProviderException {
-        // 动态添加提供者
-        Security.addProvider(new org.gmssl.crypto.GmSSLProvider());
-        SM2Test();
-        //SM3Test();
-        //SM4Test();
-    }
-
-    public static void SM2Test() {
-        // 尝试获取Cipher实例
-        try {
+    @Test
+    public void SM2Test() throws Exception{
             KeyPairGenerator keyPairGen = KeyPairGenerator.getInstance("SM2", "GmSSL");
             keyPairGen.initialize(256);
             KeyPair keyPair = keyPairGen.generateKeyPair();
@@ -94,13 +85,10 @@ public class JceTest {
             signatureImport.update(signatureText);
             boolean signatureResultImport = signatureImport.verify(signatureByteImport);
             System.out.println("SignatureResult:"+signatureResultImport);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
-    public static void SM3Test() {
-        try {
+    @Test
+    public void SM3Test() throws Exception{
             String text="Hello, GmSSL";
             //测试SM3哈希
             MessageDigest sm3Digest = MessageDigest.getInstance("SM3","GmSSL");
@@ -127,9 +115,6 @@ public class JceTest {
             SecretKey key = skf.generateSecret(spec);
             byte[] keyBytes = key.getEncoded();
             System.out.println("DerivedKey: " + byteToHex(keyBytes));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
     @Test
