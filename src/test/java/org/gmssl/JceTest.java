@@ -117,6 +117,7 @@ public class JceTest {
             System.out.println("DerivedKey: " + byteToHex(keyBytes));
     }
 
+    //SM4 C代码是否已进行了填充处理？填充后的密文与填充前明文长度是否一致，密文如何知道长度反向出明文？填充模式和算法模式是否是绑定的，比如GCM只能zeroPadding？
     @Test
     public void SM4_CBC_test() throws Exception{
             String text="Hello, GmSSL";
@@ -251,6 +252,26 @@ public class JceTest {
         System.out.println("SignatureResult:"+signatureResult);
     }
 
+    @Test
+    public void zuc_test() throws Exception{
+        String text="Hello, GmSSL";
+        SecureRandom secureRandom = SecureRandom.getInstance("Random", "GmSSL");
+        Cipher cipher = Cipher.getInstance("ZUC","GmSSL");
+        SecretKey key = new ZucKey(secureRandom.generateSeed(ZucKey.KEY_SIZE));
+        IvParameterSpec ivParameterSpec = new IvParameterSpec(secureRandom.generateSeed(ZucCipher.IV_SIZE));
+        cipher.init(Cipher.ENCRYPT_MODE, key, ivParameterSpec);
+        byte[] ciphertext = new byte[32];
+        int cipherlen = cipher.doFinal(text.getBytes(), 0, text.getBytes().length, ciphertext, 0);
+        byte[] ciphertext1 = Arrays.copyOfRange(ciphertext,0,cipherlen);
+        System.out.println("Ciphertext: " + byteToHex(ciphertext1));
+
+        cipher.init(Cipher.DECRYPT_MODE, key, ivParameterSpec);
+        byte[] plaintext = new byte[32];
+        int plainlen = cipher.doFinal(ciphertext1, 0, cipherlen, plaintext, 0);
+        byte[] plaintext1 = Arrays.copyOfRange(plaintext,0,plainlen);
+        System.out.println("plaintext: " + new String(plaintext1));
+
+    }
 
     /**
      * convert byte array to hex string

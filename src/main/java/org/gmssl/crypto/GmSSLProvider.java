@@ -26,6 +26,8 @@ public class GmSSLProvider extends Provider {
         put("Cipher.SM9", "org.gmssl.crypto.asymmetric.SM9Cipher");
         put("Signature.SM9", "org.gmssl.crypto.asymmetric.SM9Signature");
         put("KeyPairGenerator.SM9", "org.gmssl.crypto.asymmetric.SM9KeyPairGeneratorSpi");
+
+        put("Cipher.ZUC", "org.gmssl.crypto.symmetric.ZucCipher");
     }
 
 
