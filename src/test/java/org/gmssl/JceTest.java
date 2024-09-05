@@ -94,27 +94,7 @@ public class JceTest {
         SM2Certificate sm2Cert = new SM2Certificate();
         sm2Cert.importPem("D:\\cert.pem");
         System.out.println("NotAfter:"+sm2Cert.getNotAfter());
-
-        //TODO SM2Certificate继承Certificate,获取tbsCertificate解析cert实现verify方法。创建SM2CertificateFactory用以生成SM2Certificate
-        CertificateFactory certFactory = CertificateFactory.getInstance("SM2", "GmSSL");
-        X509Certificate cert = (X509Certificate) certFactory.generateCertificate(new java.io.ByteArrayInputStream(sm2Cert.getEncoded()));
-        // 提取证书的所有字段
-        System.out.println("版本号: " + cert.getVersion());
-        System.out.println("序列号: " + cert.getSerialNumber());
-        System.out.println("签名算法: " + cert.getSigAlgName());
-        System.out.println("颁发者: " + cert.getIssuerX500Principal().getName());
-        System.out.println("主体: " + cert.getSubjectX500Principal().getName());
-        System.out.println("有效期开始: " + cert.getNotBefore());
-        System.out.println("有效期结束: " + cert.getNotAfter());
-        System.out.println("公钥算法: " + cert.getPublicKey().getAlgorithm());
-        System.out.println("公钥格式: " + cert.getPublicKey().getFormat());
-        System.out.println("公钥: " + cert.getPublicKey());
-        System.out.println("签名值: " + byteToHex(cert.getSignature()));
-        // 可选字段
-        System.out.println("扩展字段是否存在： " + cert.getCriticalExtensionOIDs());
     }
-
-
 
     @Test
     public void SM3Test() throws Exception{
