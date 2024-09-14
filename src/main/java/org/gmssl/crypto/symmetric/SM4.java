@@ -1,3 +1,11 @@
+/*
+ *  Copyright 2014-2024 The GmSSL Project. All Rights Reserved.
+ *
+ *  Licensed under the Apache License, Version 2.0 (the License); you may
+ *  not use this file except in compliance with the License.
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ */
 package org.gmssl.crypto.symmetric;
 
 import org.gmssl.GmSSLException;
@@ -11,8 +19,10 @@ import java.security.SecureRandom;
 
 /**
  * @author yongfeili
- * @date 2024/8/13
+ * @email  290836576@qq.com
+ * @date 2024/07/27
  * @description
+ *
  */
 public class SM4 extends SM4Cipher {
 
@@ -77,8 +87,6 @@ public class SM4 extends SM4Cipher {
         //计算返回实际长度
         return output.length;
     }
-
-
 
     private void init(){
         if ((sm4_key = GmSSLJNI.sm4_key_new()) == 0) {

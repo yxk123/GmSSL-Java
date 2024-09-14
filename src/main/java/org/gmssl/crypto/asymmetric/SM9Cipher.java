@@ -1,7 +1,14 @@
+/*
+ *  Copyright 2014-2024 The GmSSL Project. All Rights Reserved.
+ *
+ *  Licensed under the Apache License, Version 2.0 (the License); you may
+ *  not use this file except in compliance with the License.
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ */
 package org.gmssl.crypto.asymmetric;
 
 import org.gmssl.GmSSLException;
-import org.gmssl.Sm9EncMasterKey;
 
 import javax.crypto.*;
 import java.nio.ByteBuffer;
@@ -10,8 +17,12 @@ import java.security.spec.AlgorithmParameterSpec;
 
 /**
  * @author yongfeili
- * @date 2024/8/21
- * @description
+ * @email  290836576@qq.com
+ * @date 2024/08/11
+ * @description SM9Cipher
+ * The SM9 algorithm belongs to an identity-based encryption (IBE) system.
+ * Since IBE does not require a Certificate Authority (CA) or a digital certificate infrastructure,
+ * if the application operates in a closed internal environment where all participating users are within the system, adopting the SM9 solution is a better choice.
  */
 public class SM9Cipher extends CipherSpi {
 
@@ -23,16 +34,32 @@ public class SM9Cipher extends CipherSpi {
 
     private String id;
 
+    /**
+     *
+     * @param mode the cipher mode
+     * @throws NoSuchAlgorithmException
+     * @description
+     * SM9 is an identity-based encryption and signature algorithm that does not support traditional block cipher modes.
+     */
     @Override
     protected void engineSetMode(String mode) throws NoSuchAlgorithmException {
-
     }
 
+    /**
+     *
+     * @param padding the padding mechanism
+     * @throws NoSuchPaddingException
+     * @description
+     * SM9 is an identity-based encryption and signature algorithm that does not support common padding modes.
+     */
     @Override
     protected void engineSetPadding(String padding) throws NoSuchPaddingException {
-
     }
 
+    /**
+     * SM9 is a public key encryption algorithm that does not have a fixed block size and does not use blocks.
+     * @return
+     */
     @Override
     protected int engineGetBlockSize() {
         return 0;
@@ -40,6 +67,9 @@ public class SM9Cipher extends CipherSpi {
 
     @Override
     protected int engineGetOutputSize(int inputLen) {
+        //TODO 输出长度具有随机性，输入与输出长度偏差值在119-120范围内浮动
+        //32 + inputLen + 32   encrypt
+        //inputLen - 64  decrypt
         return 0;
     }
 
@@ -55,47 +85,52 @@ public class SM9Cipher extends CipherSpi {
 
     @Override
     protected void engineInit(int opmode, Key key, SecureRandom random) throws InvalidKeyException {
-        /*if (!(key instanceof SM9PublicKey) || !(key instanceof SM9PrivateKey)) {
-            throw new GmSSLException("Invalid key type");
-        }*/
+        if (!(key instanceof SM9PrivateKey)) {
+            throw new GmSSLException("Invalid privateKey type");
+        }
         this.opmode = opmode;
         this.key = key;
         SM9PrivateKey privateKey = (SM9PrivateKey)key;
         SM9UserKey userKey = (SM9UserKey)privateKey.getSecretKey();
         this.id = userKey.getId();
-        // 初始化缓冲区
-        this.buffer = ByteBuffer.allocate(2048);
+        this.buffer = ByteBuffer.allocate(1024);
     }
 
     @Override
     protected void engineInit(int opmode, Key key, AlgorithmParameterSpec params, SecureRandom random) throws InvalidKeyException, InvalidAlgorithmParameterException {
-        /*if (!(key instanceof SM9PublicKey) || !(key instanceof SM9PrivateKey)) {
-            throw new GmSSLException("Invalid key type");
-        }*/
+        if (!(key instanceof SM9PublicKey)) {
+            throw new GmSSLException("Invalid publicKey type");
+        }
         this.opmode = opmode;
         this.key = key;
         this.id = ((SM9EncMasterKeyGenParameterSpec)params).getId();
-        // 初始化缓冲区
-        this.buffer = ByteBuffer.allocate(2048);
+        this.buffer = ByteBuffer.allocate(1024);
     }
 
     @Override
     protected void engineInit(int opmode, Key key, AlgorithmParameters params, SecureRandom random) throws InvalidKeyException, InvalidAlgorithmParameterException {
-        throw new GmSSLException("params should not be null!");
     }
 
+    /**
+     *
+     * @param input the input buffer
+     * @param inputOffset the offset in <code>input</code> where the input
+     * starts
+     * @param inputLen the input length
+     * @description
+     * SM9 encryption and decryption are completed during the engineDoFinal phase. During the update phase, data is only cached, and no partial encryption or decryption results are returned.
+     * @return
+     */
     @Override
     protected byte[] engineUpdate(byte[] input, int inputOffset, int inputLen) {
         buffer.put(input, inputOffset, inputLen);
-        // 暂时不返回输出，等待 doFinal
-        return buffer.array();
+        return null;
     }
 
     @Override
     protected int engineUpdate(byte[] input, int inputOffset, int inputLen, byte[] output, int outputOffset) throws ShortBufferException {
         buffer.put(input, inputOffset, inputLen);
-        // 暂时不返回输出，等待 doFinal
-        return output.length;
+        return 0;
     }
 
     @Override

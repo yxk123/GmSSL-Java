@@ -1,6 +1,7 @@
 package org.gmssl;
 
 import org.gmssl.crypto.asymmetric.*;
+import org.gmssl.crypto.digest.SM3Hmac;
 import org.gmssl.crypto.digest.SM3Pbkdf2;
 import org.gmssl.crypto.symmetric.*;
 import org.junit.Before;
@@ -13,8 +14,6 @@ import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.math.BigInteger;
 import java.security.*;
-import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
 import java.util.Arrays;
 
 /**
@@ -32,61 +31,86 @@ public class JceTest {
     }
 
     @Test
+    public void test() throws Exception{
+        String text="Hello, GmSSL";
+        SM9EncMasterKeyGenParameterSpec sm9EncMasterKeyGenParameterSpec = new SM9EncMasterKeyGenParameterSpec("bob");
+        KeyPairGenerator keyPairGen = KeyPairGenerator.getInstance("SM9", "GmSSL");
+        keyPairGen.initialize(sm9EncMasterKeyGenParameterSpec);
+        keyPairGen.generateKeyPair();
+
+        PublicKey publicKey = keyPairGen.genKeyPair().getPublic();
+        Cipher sm9Cipher = Cipher.getInstance("SM9", "GmSSL");
+        sm9Cipher.init(Cipher.ENCRYPT_MODE, publicKey,sm9EncMasterKeyGenParameterSpec);
+        System.out.println("len1: " + text.getBytes().length);
+        byte[] ciphertext = sm9Cipher.doFinal(text.getBytes());
+        System.out.println("len2: " + ciphertext.length);
+        System.out.println("Ciphertext: " + byteToHex(ciphertext));
+
+        SM9PrivateKey privateKey= (SM9PrivateKey) keyPairGen.genKeyPair().getPrivate();
+        SM9MasterKey masterKey = (SM9MasterKey)privateKey.getSecretKey();
+        SM9UserKey userKey= masterKey.extractKey(sm9EncMasterKeyGenParameterSpec.getId());
+        sm9Cipher.init(Cipher.DECRYPT_MODE, userKey.getPrivateKey());
+        byte[] plaintext = sm9Cipher.doFinal(ciphertext);
+        System.out.println("plaintext: " + new String(plaintext));
+
+    }
+
+    @Test
     public void SM2Test() throws Exception{
-            KeyPairGenerator keyPairGen = KeyPairGenerator.getInstance("SM2", "GmSSL");
-            keyPairGen.initialize(256);
-            KeyPair keyPair = keyPairGen.generateKeyPair();
-            byte[] pub= keyPair.getPublic().getEncoded();
-            System.out.println(byteToHex(pub));
-            byte[] pri= keyPair.getPrivate().getEncoded();
-            System.out.println(byteToHex(pri));
+        KeyPairGenerator keyPairGen = KeyPairGenerator.getInstance("SM2", "GmSSL");
+        keyPairGen.initialize(256);
+        KeyPair keyPair = keyPairGen.generateKeyPair();
+        byte[] pub= keyPair.getPublic().getEncoded();
+        System.out.println(byteToHex(pub));
+        byte[] pri= keyPair.getPrivate().getEncoded();
+        System.out.println(byteToHex(pri));
 
-            //测试“Z值”哈希值
-            SM2PublicKey sm2PublicKey = new SM2PublicKey(pub);
-            byte[] zHash = sm2PublicKey.computeZ("Hello, GmSSL");
-            System.out.println("zHash："+byteToHex(zHash));
+        //测试“Z值”哈希值
+        SM2PublicKey sm2PublicKey = new SM2PublicKey(pub);
+        byte[] zHash = sm2PublicKey.computeZ("Hello, GmSSL");
+        System.out.println("zHash："+byteToHex(zHash));
 
-            Cipher cipher = Cipher.getInstance("SM2", "GmSSL");
-            // 测试加密
-            cipher.init(Cipher.ENCRYPT_MODE, keyPair.getPublic());
-            byte[] plaintext = "Hello, GmSSL".getBytes();
-            byte[] ciphertext = cipher.doFinal(plaintext);
-            System.out.println("Ciphertext: " + byteToHex(ciphertext));
-            // 测试解密
-            cipher.init(Cipher.DECRYPT_MODE, keyPair.getPrivate());
-            byte[] decrypted = cipher.doFinal(ciphertext);
-            System.out.println("Decrypted: " + new String(decrypted));
+        Cipher cipher = Cipher.getInstance("SM2", "GmSSL");
+        // 测试加密
+        cipher.init(Cipher.ENCRYPT_MODE, keyPair.getPublic());
+        byte[] plaintext = "Hello, GmSSL".getBytes();
+        byte[] ciphertext = cipher.doFinal(plaintext);
+        System.out.println("Ciphertext: " + byteToHex(ciphertext));
+        // 测试解密
+        cipher.init(Cipher.DECRYPT_MODE, keyPair.getPrivate());
+        byte[] decrypted = cipher.doFinal(ciphertext);
+        System.out.println("Decrypted: " + new String(decrypted));
 
-            // 测试签名验签
-            Signature signature = Signature.getInstance("SM2", "GmSSL");
-            // 测试签名
-            signature.initSign(keyPair.getPrivate());
-            byte[] signatureText = "Hello, GmSSL".getBytes();
-            signature.update(signatureText);
-            byte[] signatureByte = signature.sign();
-            System.out.println("Signature:"+byteToHex(signatureByte));
-            // 测试验签
-            signature.initVerify(keyPair.getPublic());
-            signature.update(signatureText);
-            boolean signatureResult = signature.verify(signatureByte);
-            System.out.println("SignatureResult:"+signatureResult);
+        // 测试签名验签
+        Signature signature = Signature.getInstance("SM2", "GmSSL");
+        // 测试签名
+        signature.initSign(keyPair.getPrivate());
+        byte[] signatureText = "Hello, GmSSL".getBytes();
+        signature.update(signatureText);
+        byte[] signatureByte = signature.sign();
+        System.out.println("Signature:"+byteToHex(signatureByte));
+        // 测试验签
+        signature.initVerify(keyPair.getPublic());
+        signature.update(signatureText);
+        boolean signatureResult = signature.verify(signatureByte);
+        System.out.println("SignatureResult:"+signatureResult);
 
-            //测试导入私钥公钥签名验签
-            Signature signatureImport = Signature.getInstance("SM2", "GmSSL");
-            // 测试导入私钥
-            String privateKeyInfoHex="308193020100301306072a8648ce3d020106082a811ccf5501822d0479307702010104207fef3e258348873c47117c15093266e9dad99e131f1778e53d362b2b70649f85a00a06082a811ccf5501822da14403420004f94c0abb6cd00c6f0918cb9c54162213501d5cc278f5d3fcf63886f4e1dc6322b1b110e33a25216f258c4cce5fd52ab320d3b086ee5390f7387218c92578c3ab";
-            byte[] privateKeyInfo = hexToByte(privateKeyInfoHex);
-            signatureImport.initSign(new SM2PrivateKey(privateKeyInfo));
-            signatureImport.update(signatureText);
-            byte[] signatureByteImport = signatureImport.sign();
-            System.out.println("Signature:"+byteToHex(signatureByteImport));
-            // 测试导入公钥
-            String publicKeyInfoHex = "3059301306072a8648ce3d020106082a811ccf5501822d03420004f94c0abb6cd00c6f0918cb9c54162213501d5cc278f5d3fcf63886f4e1dc6322b1b110e33a25216f258c4cce5fd52ab320d3b086ee5390f7387218c92578c3ab";
-            byte[] publicKeyInfo = hexToByte(publicKeyInfoHex);
-            signatureImport.initVerify(new SM2PublicKey(publicKeyInfo));
-            signatureImport.update(signatureText);
-            boolean signatureResultImport = signatureImport.verify(signatureByteImport);
-            System.out.println("SignatureResult:"+signatureResultImport);
+        //测试导入私钥公钥签名验签
+        Signature signatureImport = Signature.getInstance("SM2", "GmSSL");
+        // 测试导入私钥
+        String privateKeyInfoHex="308193020100301306072a8648ce3d020106082a811ccf5501822d0479307702010104207fef3e258348873c47117c15093266e9dad99e131f1778e53d362b2b70649f85a00a06082a811ccf5501822da14403420004f94c0abb6cd00c6f0918cb9c54162213501d5cc278f5d3fcf63886f4e1dc6322b1b110e33a25216f258c4cce5fd52ab320d3b086ee5390f7387218c92578c3ab";
+        byte[] privateKeyInfo = hexToByte(privateKeyInfoHex);
+        signatureImport.initSign(new SM2PrivateKey(privateKeyInfo));
+        signatureImport.update(signatureText);
+        byte[] signatureByteImport = signatureImport.sign();
+        System.out.println("Signature:"+byteToHex(signatureByteImport));
+        // 测试导入公钥
+        String publicKeyInfoHex = "3059301306072a8648ce3d020106082a811ccf5501822d03420004f94c0abb6cd00c6f0918cb9c54162213501d5cc278f5d3fcf63886f4e1dc6322b1b110e33a25216f258c4cce5fd52ab320d3b086ee5390f7387218c92578c3ab";
+        byte[] publicKeyInfo = hexToByte(publicKeyInfoHex);
+        signatureImport.initVerify(new SM2PublicKey(publicKeyInfo));
+        signatureImport.update(signatureText);
+        boolean signatureResultImport = signatureImport.verify(signatureByteImport);
+        System.out.println("SignatureResult:"+signatureResultImport);
     }
 
     @Test
@@ -98,32 +122,48 @@ public class JceTest {
 
     @Test
     public void SM3Test() throws Exception{
-            String text="Hello, GmSSL";
-            //测试SM3哈希
-            MessageDigest sm3Digest = MessageDigest.getInstance("SM3","GmSSL");
-            sm3Digest.update("abc".getBytes());
-            byte[] digest = sm3Digest.digest();
-            sm3Digest.reset();
-            sm3Digest.update(text.getBytes());
-            System.out.println("digest:"+byteToHex(digest));
+        String text="Hello, GmSSL";
+        //测试SM3哈希
+        MessageDigest sm3Digest = MessageDigest.getInstance("SM3","GmSSL");
+        sm3Digest.update("abc".getBytes());
+        sm3Digest.reset();
+        sm3Digest.update(text.getBytes());
+        byte[] digest = sm3Digest.digest();
+        System.out.println("digest:"+byteToHex(digest));
 
-            //基于SM3的HMAC消息认证码算法
-            Mac hmac = Mac.getInstance("SM3Hmac", "GmSSL");
-            hmac.init(new SecretKeySpec(new Random().randBytes(Sm3Hmac.MAC_SIZE), "SM3Hmac"));
-            hmac.update(text.getBytes());
-            byte[] hmacFinal = hmac.doFinal();
-            System.out.println("hmac:"+byteToHex(hmacFinal));
+        //基于SM3的HMAC消息认证码算法
+        Mac hmac = Mac.getInstance("SM3", "GmSSL");
+        hmac.init(new SecretKeySpec(new Random().randBytes(SM3Hmac.MAC_SIZE), "SM3"));
+        hmac.update(text.getBytes());
+        byte[] hmacFinal = hmac.doFinal();
+        System.out.println("hmac:"+byteToHex(hmacFinal));
 
-            //基于口令的密钥导出函数PBKDF2
-            char[] password = "P@ssw0rd".toCharArray();
-            byte[] salt = new Random().randBytes(SM3Pbkdf2.DEFAULT_SALT_SIZE);
-            int iterations = SM3Pbkdf2.MIN_ITER * 2;
-            int keyLength = SM3Pbkdf2.MAX_KEY_SIZE;
-            PBEKeySpec spec = new PBEKeySpec(password, salt, iterations, keyLength);
-            SecretKeyFactory skf = SecretKeyFactory.getInstance("SM3Pbkdf2");
-            SecretKey key = skf.generateSecret(spec);
-            byte[] keyBytes = key.getEncoded();
-            System.out.println("DerivedKey: " + byteToHex(keyBytes));
+        //基于口令的密钥导出函数PBKDF2
+        char[] password = "P@ssw0rd".toCharArray();
+        byte[] salt = new Random().randBytes(SM3Pbkdf2.DEFAULT_SALT_SIZE);
+        int iterations = SM3Pbkdf2.MIN_ITER * 2;
+        int keyLength = SM3Pbkdf2.MAX_KEY_SIZE;
+        PBEKeySpec spec = new PBEKeySpec(password, salt, iterations, keyLength);
+        SecretKeyFactory skf = SecretKeyFactory.getInstance("SM3Pbkdf2");
+        SecretKey key = skf.generateSecret(spec);
+        byte[] keyBytes = key.getEncoded();
+        System.out.println("DerivedKey: " + byteToHex(keyBytes));
+    }
+
+    @Test
+    public void SM4_ECB_test() throws Exception{
+        SecureRandom secureRandom = SecureRandom.getInstance("Random", "GmSSL");
+        // 测试SM4加密，固定16个长度
+        Cipher sm4Cipher = Cipher.getInstance("SM4/ECB/PKCS7Padding", "GmSSL");
+        SecretKeySpec sm4Key = new SecretKeySpec(secureRandom.generateSeed(SM4.KEY_SIZE), "SM4");
+        sm4Cipher.init(Cipher.ENCRYPT_MODE, sm4Key);
+        sm4Cipher.update("87654321".getBytes(),0, 8);
+        byte[] ciphertext = sm4Cipher.doFinal("12345678".getBytes(), 0, 8);
+        System.out.println("Ciphertext: " + byteToHex(ciphertext));
+        // 测试SM4解密
+        sm4Cipher.init(Cipher.DECRYPT_MODE, sm4Key);
+        byte[] plaintext = sm4Cipher.doFinal(ciphertext, 0, 16);
+        System.out.println("plaintext: " + new String(plaintext));
     }
 
     //SM4 C代码是否已进行了填充处理？填充后的密文与填充前明文长度是否一致，密文如何知道长度反向出明文？填充模式和算法模式是否是绑定的，比如GCM只能zeroPadding？
@@ -135,18 +175,6 @@ public class JceTest {
             secureRandom.nextBytes(randomBytes);
             System.out.println("Generated Random Bytes: " + byteToHex(randomBytes));
 
-            /*// 测试SM4加密，固定16个长度
-            Cipher sm4Cipher = Cipher.getInstance("SM4", "GmSSL");
-            SecretKeySpec sm4Key = new SecretKeySpec(secureRandom.generateSeed(SM4.KEY_SIZE), "SM4");
-            sm4Cipher.init(Cipher.ENCRYPT_MODE, sm4Key);
-            sm4Cipher.update("87654321".getBytes(),0, 8);
-            byte[] ciphertext = sm4Cipher.doFinal("12345678".getBytes(), 0, 8);
-            System.out.println("Ciphertext: " + byteToHex(ciphertext));
-            // 测试SM4解密
-            sm4Cipher.init(Cipher.DECRYPT_MODE, sm4Key);
-            byte[] plaintext = sm4Cipher.doFinal(ciphertext, 0, 16);
-            System.out.println("plaintext: " + new String(plaintext));*/
-
             Cipher sm4cbcCipher = Cipher.getInstance("SM4/CBC/PKCS5Padding", "GmSSL");
             byte[] key = secureRandom.generateSeed(SM4CBC.KEY_SIZE);
             byte[] iv = secureRandom.generateSeed(SM4CBC.IV_SIZE);
@@ -156,6 +184,7 @@ public class JceTest {
             int inputLen = plaintext.length - inputOffset;
             byte[] ciphertext = new byte[inputLen+SM4CBC.BLOCK_SIZE];
             //int test= sm4cbcCipher.update("abc".getBytes(), 0, 3, ciphertext, 0);
+            //System.out.println(ciphertext);
             int cipherlen = sm4cbcCipher.doFinal(plaintext, inputOffset, inputLen,ciphertext, 0);
             byte[] ciphertext1 = Arrays.copyOfRange(ciphertext,0,cipherlen);
             System.out.println("Ciphertext: " + byteToHex(ciphertext1));
@@ -194,7 +223,7 @@ public class JceTest {
     public void SM4_GCM_test() throws Exception {
         String text="Hello, GmSSL";
         SecureRandom secureRandom = SecureRandom.getInstance("Random", "GmSSL");
-        Cipher sm4Cipher = Cipher.getInstance("SM4/GCM/ZeroPadding", "GmSSL");
+        Cipher sm4Cipher = Cipher.getInstance("SM4/GCM/NoPadding", "GmSSL");
         byte[] key = secureRandom.generateSeed(SM4GCM.KEY_SIZE);
         byte[] iv = secureRandom.generateSeed(SM4GCM.DEFAULT_IV_SIZE);
         byte[] aad = "Hello: ".getBytes();

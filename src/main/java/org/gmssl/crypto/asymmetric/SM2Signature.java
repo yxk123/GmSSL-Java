@@ -1,3 +1,11 @@
+/*
+ *  Copyright 2014-2024 The GmSSL Project. All Rights Reserved.
+ *
+ *  Licensed under the Apache License, Version 2.0 (the License); you may
+ *  not use this file except in compliance with the License.
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ */
 package org.gmssl.crypto.asymmetric;
 
 import org.gmssl.GmSSLException;
@@ -7,8 +15,10 @@ import java.security.*;
 
 /**
  * @author yongfeili
- * @date 2024/8/2
- * @description
+ * @email  290836576@qq.com
+ * @date 2024/08/11
+ * @description SM2Signature
+ * It provides signing and verification functionality for messages of arbitrary length.
  */
 public class SM2Signature extends SignatureSpi {
 
@@ -25,7 +35,6 @@ public class SM2Signature extends SignatureSpi {
 
     @Override
     protected void engineInitVerify(PublicKey publicKey) throws InvalidKeyException {
-        // 实现初始化验证
         if (!(publicKey instanceof SM2PublicKey)) {
             throw new GmSSLException("Invalid publicKey type");
         }
@@ -35,7 +44,6 @@ public class SM2Signature extends SignatureSpi {
 
     @Override
     protected void engineInitSign(PrivateKey privateKey) throws InvalidKeyException {
-        // 实现初始化签名
         if (!(privateKey instanceof SM2PrivateKey)) {
             throw new GmSSLException("Invalid privateKey type");
         }
@@ -56,26 +64,22 @@ public class SM2Signature extends SignatureSpi {
 
     @Override
     protected byte[] engineSign() throws SignatureException {
-        // 实现签名生成
         byte[] data = sign();
         return data;
     }
 
     @Override
     protected boolean engineVerify(byte[] sigBytes) throws SignatureException {
-        // 实现签名验证
         boolean verifyResult= verify(sigBytes);
         return verifyResult;
     }
 
     @Override
     protected void engineSetParameter(String param, Object value) throws InvalidParameterException {
-        // 实现设置参数
     }
 
     @Override
     protected Object engineGetParameter(String param) throws InvalidParameterException {
-        // 实现获取参数
         return null;
     }
 

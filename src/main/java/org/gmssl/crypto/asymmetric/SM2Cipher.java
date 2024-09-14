@@ -1,3 +1,11 @@
+/*
+ *  Copyright 2014-2024 The GmSSL Project. All Rights Reserved.
+ *
+ *  Licensed under the Apache License, Version 2.0 (the License); you may
+ *  not use this file except in compliance with the License.
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ */
 package org.gmssl.crypto.asymmetric;
 
 import org.gmssl.GmSSLException;
@@ -10,8 +18,11 @@ import java.security.spec.AlgorithmParameterSpec;
 
 /**
  * @author yongfeili
- * @date 2024/8/2
+ * @email  290836576@qq.com
+ * @date 2024/08/11
  * @description
+ * The SM2Cipher class implements encryption and decryption methods. When calling the encrypt method, ensure that the length of the plaintext input does not exceed the MAX_PLAINTEXT_SIZE limit.
+ * If you need to encrypt a message at the reference layer, first generate a symmetric key, encrypt the message using SM4-GCM, and then encrypt the symmetric key using SM2.
  */
 public class SM2Cipher extends CipherSpi {
 
@@ -20,45 +31,52 @@ public class SM2Cipher extends CipherSpi {
     private SecureRandom random;
     private ByteBuffer buffer;
 
+    /**
+     * SM2 uses the C1C2C3 encryption mode.
+     * @param mode the cipher mode
+     *
+     * @throws NoSuchAlgorithmException
+     */
     @Override
     protected void engineSetMode(String mode) throws NoSuchAlgorithmException {
-        if (!mode.equalsIgnoreCase("ECB")) {
-            throw new NoSuchAlgorithmException("Unsupported mode: " + mode);
-        }
-        // SM2 只支持 ECB 模式
+
     }
 
+    /**
+     * SM2 has adopted the corresponding padding rule and does not involve specific padding modes.
+     * @param padding the padding mechanism
+     *
+     * @throws NoSuchPaddingException
+     */
     @Override
     protected void engineSetPadding(String padding) throws NoSuchPaddingException {
-        if (!padding.equalsIgnoreCase("NoPadding")) {
-            throw new NoSuchPaddingException("Unsupported padding: " + padding);
-        }
-        // SM2 不使用填充
+
     }
 
+    /**
+     * SM2 does not have a fixed block size.
+     * @return
+     */
     @Override
     protected int engineGetBlockSize() {
-        // SM2 是流加密，没有块大小
         return 0;
     }
 
     @Override
     protected int engineGetOutputSize(int inputLen) {
-        // 根据输入长度计算输出长度
-        // 这里只是示例，具体实现需要根据实际情况调整
-        // 例如，假设增加一个固定长度的输出
-        return inputLen+32;
+        // TODO 计算输出长度。加密模式和解密模式输出长度随机，在+-3范围内跳动
+        //cipherLen=65+plainTextLen+32   cipherLen=C1_size+plainTextLen+C3_size
+        //plainTextLen=cipherLen−C1_size−C3_size   plainTextLen=cipherLen−65−32
+        return 0;
     }
 
     @Override
     protected byte[] engineGetIV() {
-        // // SM2 不使用 IV
         return null;
     }
 
     @Override
     protected AlgorithmParameters engineGetParameters() {
-        // SM2 不使用参数
         return null;
     }
 
@@ -70,8 +88,7 @@ public class SM2Cipher extends CipherSpi {
         this.key = (SM2Key)key;
         this.mode = mode;
         this.random = (secureRandom != null) ? secureRandom : new SecureRandom();
-        // 初始化缓冲区
-        this.buffer = ByteBuffer.allocate(2048);
+        this.buffer = ByteBuffer.allocate(1024);
     }
 
     @Override
@@ -84,23 +101,39 @@ public class SM2Cipher extends CipherSpi {
         engineInit(mode, key, random);
     }
 
+    /**
+     *
+     * @param input the input buffer
+     * @param inputOffset the offset in <code>input</code> where the input
+     * starts
+     * @param inputLen the input length
+     *
+     * @return null
+     * The SM2 algorithm typically does not return any data during the engineUpdate phase.
+     */
     @Override
     protected byte[] engineUpdate(byte[] input, int inputOffset, int inputLen) {
+        if (input == null || inputOffset < 0 || inputLen < 0 || inputOffset + inputLen > input.length) {
+            throw new IllegalArgumentException("Invalid input parameters");
+        }
         buffer.put(input, inputOffset, inputLen);
-        // 暂时不返回输出，等待 doFinal
-        return buffer.array();
+        return null;
     }
 
     @Override
     protected int engineUpdate(byte[] input, int inputOffset, int inputLen, byte[] output, int outputOffset) throws ShortBufferException {
+        if (input == null || inputOffset < 0 || inputLen < 0 || inputOffset + inputLen > input.length) {
+            throw new IllegalArgumentException("Invalid input parameters");
+        }
         buffer.put(input, inputOffset, inputLen);
-        // 暂时不返回输出，等待 doFinal
-        return output.length;
+        return 0;
     }
 
     @Override
     protected byte[] engineDoFinal(byte[] input, int inputOffset, int inputLen) throws IllegalBlockSizeException, BadPaddingException {
-        buffer.put(input, inputOffset, inputLen);
+        if(null != input){
+            buffer.put(input, inputOffset, inputLen);
+        }
         byte[] data = new byte[buffer.position()];
         buffer.flip();
         buffer.get(data);

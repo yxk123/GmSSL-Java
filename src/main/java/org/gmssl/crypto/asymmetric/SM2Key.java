@@ -1,3 +1,11 @@
+/*
+ *  Copyright 2014-2024 The GmSSL Project. All Rights Reserved.
+ *
+ *  Licensed under the Apache License, Version 2.0 (the License); you may
+ *  not use this file except in compliance with the License.
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ */
 package org.gmssl.crypto.asymmetric;
 
 import org.gmssl.GmSSLException;
@@ -7,8 +15,10 @@ import java.security.Key;
 
 /**
  * @author yongfeili
- * @date 2024/8/2
- * @description
+ * @email  290836576@qq.com
+ * @date 2024/08/11
+ * @description SM2Key
+ *
  */
 public abstract class SM2Key implements Key {
 

@@ -1,3 +1,11 @@
+/*
+ *  Copyright 2014-2024 The GmSSL Project. All Rights Reserved.
+ *
+ *  Licensed under the Apache License, Version 2.0 (the License); you may
+ *  not use this file except in compliance with the License.
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ */
 package org.gmssl.crypto.asymmetric;
 
 import org.gmssl.GmSSLException;
@@ -8,8 +16,13 @@ import java.security.cert.*;
 
 /**
  * @author yongfeili
- * @date 2024/8/27
+ * @email  290836576@qq.com
+ * @date 2024/08/11
  * @description
+ * The certificate format is the standard X.509v3 certificate. Currently, only the SM2 signature algorithm is supported.
+ * This includes functions for parsing and verifying SM2 certificates. However, issuing and generating SM2 certificates are not supported.
+ * If the application needs to implement certificate request (i.e., generating CSR files) or self-built CA certificate issuance,
+ * these functionalities can be achieved using the GmSSL library or the gmssl command-line tool.
  */
 public class SM2Certificate{
 

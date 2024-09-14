@@ -15,11 +15,19 @@ package org.gmssl.crypto;
  * @description
  *
  */
-public interface PaddingScheme {
+public class PKCS7PaddingScheme implements PaddingScheme{
+    @Override
+    public String getPaddingName() {
+        return null;
+    }
 
-    String getPaddingName();
+    @Override
+    public int addPadding(byte[] in, int inOff) {
+        return 0;
+    }
 
-    int addPadding(byte[] in, int inOff);
-
-    int padCount(byte[] in);
+    @Override
+    public int padCount(byte[] in) {
+        return 0;
+    }
 }

@@ -1,14 +1,26 @@
+/*
+ *  Copyright 2014-2024 The GmSSL Project. All Rights Reserved.
+ *
+ *  Licensed under the Apache License, Version 2.0 (the License); you may
+ *  not use this file except in compliance with the License.
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ */
 package org.gmssl.crypto.symmetric;
 
+import org.gmssl.crypto.CipherPaddingEnum;
+import org.gmssl.crypto.PKCS7PaddingScheme;
+
 import javax.crypto.*;
-import java.nio.ByteBuffer;
 import java.security.*;
 import java.security.spec.AlgorithmParameterSpec;
 
 /**
  * @author yongfeili
- * @date 2024/8/12
+ * @email  290836576@qq.com
+ * @date 2024/07/27
  * @description
+ *
  */
 public class SM4Cipher extends CipherSpi {
 
@@ -20,19 +32,18 @@ public class SM4Cipher extends CipherSpi {
 
     @Override
     protected void engineSetMode(String mode) throws NoSuchAlgorithmException {
-        // 设置加密模式
         this.sm4Engine = SM4CipherFactory.createCipher(mode);
     }
 
     @Override
     protected void engineSetPadding(String padding) throws NoSuchPaddingException {
-        // 设置填充方式，可以选择支持PKCS5Padding，NoPadding等
-        System.out.println("padding2:" + padding);
+        if(CipherPaddingEnum.PKCS7Padding.name().equals(padding)){
+            this.sm4Engine.paddingScheme=new PKCS7PaddingScheme();
+        }
     }
 
     @Override
     protected int engineGetBlockSize() {
-        // SM4块大小为16字节
         return SM4Engine.BLOCK_SIZE;
     }
 
@@ -44,25 +55,22 @@ public class SM4Cipher extends CipherSpi {
 
     @Override
     protected byte[] engineGetIV() {
-        // ECB模式不使用IV
         return sm4Engine.engineGetIV();
     }
 
     @Override
     protected AlgorithmParameters engineGetParameters() {
-        // 无需额外的参数
         return null;
     }
 
     @Override
     protected void engineInit(int opmode, Key key, SecureRandom random) throws InvalidKeyException {
-
+        sm4Engine.init(opmode,key,random);
     }
 
     @Override
     protected void engineInit(int opmode, Key key, AlgorithmParameterSpec params, SecureRandom random) throws InvalidKeyException, InvalidAlgorithmParameterException {
-        sm4Engine.engineInit(opmode, key, params, random);
-
+        sm4Engine.init(opmode, key, params, random);
     }
 
     @Override
@@ -72,31 +80,31 @@ public class SM4Cipher extends CipherSpi {
 
     @Override
     protected byte[] engineUpdate(byte[] input, int inputOffset, int inputLen) {
-
-        return null;
+        byte[] result = sm4Engine.processUpdate(input,inputOffset,inputLen);
+        return result;
     }
 
     @Override
     protected int engineUpdate(byte[] input, int inputOffset, int inputLen, byte[] output, int outputOffset) throws ShortBufferException {
-        int outLen = sm4Engine.engineUpdate(input, inputOffset, inputLen, output, outputOffset);
+        int outLen = sm4Engine.processUpdate(input, inputOffset, inputLen, output, outputOffset);
         return outLen;
     }
 
     @Override
     protected byte[] engineDoFinal(byte[] input, int inputOffset, int inputLen) throws IllegalBlockSizeException, BadPaddingException {
-
-        return null;
+        byte[] result = sm4Engine.processBlock(input, inputOffset, inputLen);
+        return result;
     }
 
     @Override
     protected int engineDoFinal(byte[] input, int inputOffset, int inputLen, byte[] output, int outputOffset) throws ShortBufferException, IllegalBlockSizeException, BadPaddingException {
-        int outLen = sm4Engine.engineDoFinal(input, inputOffset, inputLen, output, outputOffset);
+        int outLen = sm4Engine.processBlock(input, inputOffset, inputLen, output, outputOffset);
         return outLen;
     }
 
     @Override
     protected void engineUpdateAAD(byte[] src, int offset, int len) {
-        sm4Engine.engineUpdateAAD(src, offset, len);
+        sm4Engine.processUpdateAAD(src, offset, len);
     }
 
 }
