@@ -16,10 +16,12 @@ import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.ShortBufferException;
 import javax.crypto.spec.GCMParameterSpec;
+import java.nio.ByteBuffer;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.SecureRandom;
 import java.security.spec.AlgorithmParameterSpec;
+import java.util.Arrays;
 
 /**
  * @author yongfeili
@@ -42,7 +44,7 @@ public class SM4GCM extends SM4Engine {
 
     private byte[] iv;
 
-    private byte[] aad;
+    private ByteBuffer aad;
 
     private Key key;
 
@@ -50,14 +52,16 @@ public class SM4GCM extends SM4Engine {
 
     private int offset;
 
-    public SM4GCM(){
+    private byte[] outputByteArray;
+
+    protected SM4GCM(){
         super();
         ctx();
     }
 
     @Override
     protected void init(int opmode, Key key, SecureRandom random) throws InvalidKeyException {
-
+        throw new GmSSLException("Initialization method not supported!");
     }
 
     @Override
@@ -69,6 +73,9 @@ public class SM4GCM extends SM4Engine {
         this.iv = ((GCMParameterSpec) params).getIV();
         this.tLen = ((GCMParameterSpec) params).getTLen();
         this.do_encrypt = (opmode == Cipher.ENCRYPT_MODE);
+
+        outputByteArray = new byte[BLOCK_SIZE+tLen];
+        aad=ByteBuffer.allocate(BLOCK_SIZE+tLen);
     }
 
     @Override
@@ -78,19 +85,38 @@ public class SM4GCM extends SM4Engine {
 
     @Override
     protected byte[] processUpdate(byte[] input, int inputOffset, int inputLen) {
-        return new byte[0];
+        byte[] tempByteArray=new byte[outputByteArray.length+inputLen];
+        System.arraycopy(outputByteArray,0,tempByteArray,0,outputByteArray.length);
+        outputByteArray=tempByteArray;
+
+        int outLen = processUpdate(input, inputOffset, inputLen, outputByteArray, offset);
+        return Arrays.copyOfRange(outputByteArray,0,outLen);
     }
 
     @Override
-    protected int processUpdate(byte[] input, int inputOffset, int inputLen, byte[] output, int outputOffset) throws ShortBufferException {
+    protected int processUpdate(byte[] input, int inputOffset, int inputLen, byte[] output, int outputOffset) {
         int outLen = update(input, inputOffset, inputLen, output, outputOffset);
         this.offset+=outLen;
-        return outLen;
+        return offset;
+    }
+
+    @Override
+    protected byte[] processBlock(byte[] input, int inputOffset, int inputLen) throws IllegalBlockSizeException, BadPaddingException {
+        if(null!=input){
+            processUpdate(input, inputOffset, inputLen);
+        }
+        int outLen = doFinal(outputByteArray, this.offset);
+        outLen = outLen + this.offset;
+        this.offset = 0;
+        outputByteArray = Arrays.copyOfRange(outputByteArray,0,outLen);
+        return outputByteArray;
     }
 
     @Override
     protected int processBlock(byte[] input, int inputOffset, int inputLen, byte[] output, int outputOffset) throws ShortBufferException, IllegalBlockSizeException, BadPaddingException {
-        processUpdate(input, inputOffset, inputLen, output, outputOffset);
+        if(null!=input) {
+            processUpdate(input, inputOffset, inputLen, output, outputOffset);
+        }
         int outLen = doFinal(output, this.offset);
         outLen = outLen + this.offset;
         this.offset = 0;
@@ -98,16 +124,16 @@ public class SM4GCM extends SM4Engine {
     }
 
     @Override
-    protected byte[] processBlock(byte[] input, int inputOffset, int inputLen) throws IllegalBlockSizeException, BadPaddingException {
-        return new byte[0];
-    }
-
-    @Override
     protected void processUpdateAAD(byte[] src, int offset, int len) {
-        this.aad = new byte[len];
-        System.arraycopy(src, offset, this.aad, 0, len);
+        if(aad.remaining()<len){
+            ByteBuffer newByteBuffer=ByteBuffer.allocate(aad.capacity()+len);
+            aad.flip();
+            newByteBuffer.put(aad);
+            aad=newByteBuffer;
+        }
+        aad.put(src,offset,len);
 
-        init(key.getEncoded(), iv,aad,tLen, do_encrypt);
+        init(key.getEncoded(), iv,aad.array(),tLen, do_encrypt);
     }
 
     private void ctx(){

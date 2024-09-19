@@ -8,26 +8,44 @@
  */
 package org.gmssl.crypto;
 
+import java.util.Arrays;
+
 /**
  * @author yongfeili
  * @email  290836576@qq.com
  * @date 2024/07/27
- * @description
+ * @description PKCS#7
  *
  */
 public class PKCS7PaddingScheme implements PaddingScheme{
     @Override
     public String getPaddingName() {
-        return null;
+        return "PKCS#7";
     }
 
     @Override
-    public int addPadding(byte[] in, int inOff) {
-        return 0;
+    public byte[] pad(byte[] input, int blockSize) {
+        int paddingLength = blockSize - (input.length % blockSize);
+        byte[] padding = new byte[paddingLength];
+        Arrays.fill(padding, (byte) paddingLength);
+        byte[] result = new byte[input.length + padding.length];
+        System.arraycopy(input, 0, result, 0, input.length);
+        System.arraycopy(padding, 0, result, input.length, padding.length);
+        return result;
     }
 
     @Override
-    public int padCount(byte[] in) {
-        return 0;
+    public byte[] unpad(byte[] input) {
+        int paddingSize = input[input.length - 1];
+        if (paddingSize <= 0 || paddingSize > input.length) {
+            throw new IllegalArgumentException("Invalid pkcs#7 padding!");
+        }
+        for (int i = input.length - paddingSize; i < input.length; i++) {
+            if (input[i] != paddingSize) {
+                throw new IllegalArgumentException("Invalid pkcs#7 padding!");
+            }
+        }
+        return Arrays.copyOfRange(input, 0, input.length - paddingSize);
     }
+
 }

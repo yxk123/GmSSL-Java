@@ -64,9 +64,6 @@ public class SM2Cipher extends CipherSpi {
 
     @Override
     protected int engineGetOutputSize(int inputLen) {
-        // TODO 计算输出长度。加密模式和解密模式输出长度随机，在+-3范围内跳动
-        //cipherLen=65+plainTextLen+32   cipherLen=C1_size+plainTextLen+C3_size
-        //plainTextLen=cipherLen−C1_size−C3_size   plainTextLen=cipherLen−65−32
         return 0;
     }
 

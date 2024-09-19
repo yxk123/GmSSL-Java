@@ -10,6 +10,7 @@ package org.gmssl.crypto.symmetric;
 
 import org.gmssl.GmSSLException;
 import org.gmssl.GmSSLJNI;
+import org.gmssl.Sm4;
 
 import javax.crypto.*;
 import java.nio.ByteBuffer;
@@ -17,6 +18,7 @@ import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.SecureRandom;
 import java.security.spec.AlgorithmParameterSpec;
+import java.util.Arrays;
 
 /**
  * @author yongfeili
@@ -27,13 +29,10 @@ import java.security.spec.AlgorithmParameterSpec;
  */
 public class SM4ECB extends SM4Engine {
 
-    public final static int KEY_SIZE = GmSSLJNI.SM4_KEY_SIZE;
-    public final static int BLOCK_SIZE = GmSSLJNI.SM4_BLOCK_SIZE;
-
     private Key key;
-    private long sm4_key = 0;
+    private long sm4_key;
 
-    private boolean do_encrypt = false;
+    private boolean do_encrypt;
 
     private ByteBuffer buffer;
 
@@ -51,7 +50,7 @@ public class SM4ECB extends SM4Engine {
 
     @Override
     protected void init(int opmode, Key key, AlgorithmParameterSpec params, SecureRandom random) {
-
+        throw new GmSSLException("Initialization method not supported!");
     }
 
     @Override
@@ -59,6 +58,14 @@ public class SM4ECB extends SM4Engine {
         return null;
     }
 
+    /**
+     * Mainly used for caching data; it will not immediately generate encryption or decryption results
+     * @param input
+     * @param inputOffset
+     * @param inputLen
+     * @return null
+     * Return a non-actual value; actual encryption or decryption operations are performed in processBlock
+     */
     @Override
     protected byte[] processUpdate(byte[] input, int inputOffset, int inputLen) {
         putBytes(input, inputOffset, inputLen);
@@ -66,28 +73,65 @@ public class SM4ECB extends SM4Engine {
     }
 
     @Override
-    protected int processUpdate(byte[] input, int inputOffset, int inputLen, byte[] output, int outputOffset) throws ShortBufferException {
-        putBytes(input, inputOffset, inputLen);
-        return 0;
-    }
-
-    @Override
-    protected int processBlock(byte[] input, int inputOffset, int inputLen, byte[] output, int outputOffset) throws ShortBufferException, IllegalBlockSizeException, BadPaddingException {
-
-        return 0;
-    }
-
-    @Override
     protected byte[] processBlock(byte[] input, int inputOffset, int inputLen) throws IllegalBlockSizeException, BadPaddingException {
-        putBytes(input, inputOffset, inputLen);
+        if(null!=input){
+            putBytes(input, inputOffset, inputLen);
+        }
         byte[] data = new byte[buffer.position()];
         buffer.flip();
         buffer.get(data);
 
-        byte[] output = new byte[buffer.position()];
-        encrypt(data,0,output,0);
+        byte[] outPutByteArray = new byte[buffer.position()];
+        if(do_encrypt){
+            data = this.paddingScheme.pad(data,this.BLOCK_SIZE);
+            outPutByteArray = new byte[data.length];
+            for (int i = 0; i < data.length; i += this.BLOCK_SIZE) {
+                encrypt(data,i,outPutByteArray,i);
+            }
+        }else{
+            for (int i = 0; i < data.length; i += this.BLOCK_SIZE) {
+                encrypt(data,i,outPutByteArray,i);
+            }
+            outPutByteArray=this.paddingScheme.unpad(outPutByteArray);
+        }
+
         buffer.clear();
-        return output;
+        return outPutByteArray;
+    }
+
+    /**
+     * Mainly used for caching data; it will not immediately generate encryption or decryption results
+     * @param input
+     * @param inputOffset
+     * @param inputLen
+     * @param output
+     * @param outputOffset
+     * @return 0
+     * Return a non-actual value; actual encryption or decryption operations are performed in processBlock
+     */
+    @Override
+    protected int processUpdate(byte[] input, int inputOffset, int inputLen, byte[] output, int outputOffset) {
+        putBytes(input, inputOffset, inputLen);
+        return 0;
+    }
+
+    /**
+     *
+     * @param input
+     * @param inputOffset
+     * @param inputLen
+     * @param output
+     * @param outputOffset
+     * @return actual encryption or decryption bytes length,not the whole length of the output data
+     *
+     * @throws IllegalBlockSizeException
+     * @throws BadPaddingException
+     */
+    @Override
+    protected int processBlock(byte[] input, int inputOffset, int inputLen, byte[] output, int outputOffset) throws IllegalBlockSizeException, BadPaddingException {
+        byte[] outPutByteArray = processBlock(input, inputOffset, inputLen);
+        System.arraycopy(outPutByteArray, 0,output, outputOffset, outPutByteArray.length);
+        return outPutByteArray.length;
     }
 
     private void putBytes(byte[] input, int inputOffset, int inputLen){

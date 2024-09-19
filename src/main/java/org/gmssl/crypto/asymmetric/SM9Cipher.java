@@ -67,9 +67,6 @@ public class SM9Cipher extends CipherSpi {
 
     @Override
     protected int engineGetOutputSize(int inputLen) {
-        //TODO 输出长度具有随机性，输入与输出长度偏差值在119-120范围内浮动
-        //32 + inputLen + 32   encrypt
-        //inputLen - 64  decrypt
         return 0;
     }
 

@@ -17,9 +17,24 @@ package org.gmssl.crypto;
  */
 public interface PaddingScheme {
 
+    /**
+     * get padding name
+     * @return paddingName
+     */
     String getPaddingName();
 
-    int addPadding(byte[] in, int inOff);
+    /**
+     * Pad according to fixed block size
+     * @param input Data to be padded
+     * @param blockSize block size
+     * @return padded data
+     */
+    byte[] pad(byte[] input, int blockSize);
 
-    int padCount(byte[] in);
+    /**
+     * Unpad according to fixed block size
+     * @param input Data to be unpadded
+     * @return unpadded data
+     */
+    byte[] unpad(byte[] input);
 }

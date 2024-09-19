@@ -8,6 +8,7 @@
  */
 package org.gmssl.crypto.symmetric;
 
+import org.gmssl.GmSSLJNI;
 import org.gmssl.crypto.CipherPaddingEnum;
 import org.gmssl.crypto.PKCS7PaddingScheme;
 
@@ -23,6 +24,10 @@ import java.security.spec.AlgorithmParameterSpec;
  *
  */
 public class SM4Cipher extends CipherSpi {
+
+    public static final int KEY_SIZE = GmSSLJNI.SM4_KEY_SIZE;
+
+    public static final int BLOCK_SIZE = GmSSLJNI.SM4_BLOCK_SIZE;
 
     private SM4Engine sm4Engine;
 

@@ -11,16 +11,13 @@ package org.gmssl.crypto.symmetric;
 import org.gmssl.GmSSLException;
 import org.gmssl.GmSSLJNI;
 
-import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.ShortBufferException;
 import javax.crypto.spec.IvParameterSpec;
-import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.SecureRandom;
 import java.security.spec.AlgorithmParameterSpec;
+import java.util.Arrays;
 
 /**
  * @author yongfeili
@@ -33,21 +30,22 @@ public class SM4CBC extends SM4Engine {
 
     public final static int IV_SIZE = GmSSLJNI.SM4_BLOCK_SIZE;
 
-    private long sm4_cbc_ctx = 0;
+    private long sm4_cbc_ctx;
 
     private byte[] iv;
 
     private boolean do_encrypt = true;
 
-    private boolean inited = false;
+    private boolean inited;
 
-    private int offset = 0;
+    private int offset;
 
-    public SM4CBC() {
+    private byte[] outputByteArray;
+
+    protected SM4CBC() {
         super();
         ctx();
     }
-
 
     @Override
     protected byte[] engineGetIV() {
@@ -55,13 +53,8 @@ public class SM4CBC extends SM4Engine {
     }
 
     @Override
-    protected byte[] processUpdate(byte[] input, int inputOffset, int inputLen) {
-        return new byte[0];
-    }
-
-    @Override
     protected void init(int opmode, Key key, SecureRandom random) throws InvalidKeyException {
-
+        throw new GmSSLException("Initialization method not supported!");
     }
 
     @Override
@@ -72,27 +65,48 @@ public class SM4CBC extends SM4Engine {
         this.iv = ((IvParameterSpec) params).getIV();
         this.do_encrypt = (opmode == Cipher.ENCRYPT_MODE);
         init(key.getEncoded(), iv, do_encrypt);
+
+        outputByteArray = new byte[BLOCK_SIZE];
     }
 
     @Override
-    protected int processUpdate(byte[] input, int inputOffset, int inputLen, byte[] output, int outputOffset) throws ShortBufferException {
+    protected byte[] processUpdate(byte[] input, int inputOffset, int inputLen) {
+        byte[] tempByteArray=new byte[outputByteArray.length+inputLen];
+        System.arraycopy(outputByteArray,0,tempByteArray,0,outputByteArray.length);
+        outputByteArray=tempByteArray;
+
+        int outLen = processUpdate(input, inputOffset, inputLen, outputByteArray, offset);
+        return Arrays.copyOfRange(outputByteArray,0,outLen);
+    }
+
+    @Override
+    protected int processUpdate(byte[] input, int inputOffset, int inputLen, byte[] output, int outputOffset){
         int outLen = update(input, inputOffset, inputLen, output, outputOffset);
         this.offset+=outLen;
-        return outLen;
+        return offset;
     }
 
     @Override
-    protected int processBlock(byte[] input, int inputOffset, int inputLen, byte[] output, int outputOffset) throws ShortBufferException, IllegalBlockSizeException, BadPaddingException {
-        this.processUpdate(input, inputOffset, inputLen, output, outputOffset);
+    protected byte[] processBlock(byte[] input, int inputOffset, int inputLen) {
+        if(null!=input){
+            processUpdate(input, inputOffset, inputLen);
+        }
+        int outLen = doFinal(outputByteArray, this.offset);
+        outLen = outLen + this.offset;
+        this.offset = 0;
+        outputByteArray = Arrays.copyOfRange(outputByteArray,0,outLen);
+        return outputByteArray;
+    }
+
+    @Override
+    protected int processBlock(byte[] input, int inputOffset, int inputLen, byte[] output, int outputOffset) {
+        if(null!=input){
+            this.processUpdate(input, inputOffset, inputLen, output, outputOffset);
+        }
         int outLen = doFinal(output, this.offset);
         outLen = outLen + this.offset;
         this.offset = 0;
         return outLen;
-    }
-
-    @Override
-    protected byte[] processBlock(byte[] input, int inputOffset, int inputLen) throws IllegalBlockSizeException, BadPaddingException {
-        return new byte[0];
     }
 
     private void ctx() {
@@ -110,7 +124,7 @@ public class SM4CBC extends SM4Engine {
             throw new GmSSLException("");
         }
 
-        if (do_encrypt == true) {
+        if (do_encrypt) {
             if (GmSSLJNI.sm4_cbc_encrypt_init(this.sm4_cbc_ctx, key, iv) != 1) {
                 throw new GmSSLException("");
             }

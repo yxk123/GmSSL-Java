@@ -113,7 +113,7 @@ public class Sm4EcbTest {
     private static byte[] decrypt(byte[] data, byte[] key) {
         byte[] plaintext=new byte[data.length];
         Sm4 sm4 = new Sm4(key, false);
-        for (int i = 0; i < data.length; i += 16) {
+        for (int i = 0; i < data.length; i += Sm4.BLOCK_SIZE) {
             sm4.encrypt(data, i, plaintext, i);
         }
         return plaintext;

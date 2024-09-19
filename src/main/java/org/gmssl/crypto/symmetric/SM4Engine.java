@@ -29,11 +29,11 @@ import java.security.spec.AlgorithmParameterSpec;
  */
 public abstract class SM4Engine {
 
+    public static final int KEY_SIZE = SM4Cipher.KEY_SIZE;
+
+    public static final int BLOCK_SIZE = SM4Cipher.BLOCK_SIZE;
+
     protected PaddingScheme paddingScheme;
-
-    public static final int KEY_SIZE = GmSSLJNI.SM4_KEY_SIZE;
-
-    public static final int BLOCK_SIZE = GmSSLJNI.SM4_BLOCK_SIZE;
 
     protected abstract void init(int opmode, Key key, SecureRandom random) throws InvalidKeyException;
 
@@ -50,7 +50,4 @@ public abstract class SM4Engine {
     protected abstract byte[] processBlock(byte[] input, int inputOffset, int inputLen) throws IllegalBlockSizeException, BadPaddingException;
     protected void processUpdateAAD(byte[] src, int offset, int len){};
 
-    //String getAlgorithmName();
-
-    //int getBlockSize();
 }
