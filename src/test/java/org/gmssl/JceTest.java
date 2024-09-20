@@ -38,6 +38,9 @@ public class JceTest {
         byte[] pub= keyPair.getPublic().getEncoded();
         System.out.println(byteToHex(pub));
         byte[] pri= keyPair.getPrivate().getEncoded();
+        // export private key
+        SM2PrivateKey SM2PrivateKey= (SM2PrivateKey)keyPair.getPrivate();
+        SM2PrivateKey.exportEncryptedPrivateKeyInfoPem("123456", "D:\\private.key.pem");
         System.out.println(byteToHex(pri));
 
         //Test "Z-value" hash
@@ -105,14 +108,14 @@ public class JceTest {
         byte[] digest = sm3Digest.digest();
         System.out.println("digest:"+byteToHex(digest));
 
-        //基于SM3的HMAC消息认证码算法
+        //HMAC Message Authentication Code Algorithm Based on SM3
         Mac hmac = Mac.getInstance("SM3", "GmSSL");
         hmac.init(new SecretKeySpec(new Random().randBytes(SM3Hmac.MAC_SIZE), "SM3"));
         hmac.update(text.getBytes());
         byte[] hmacFinal = hmac.doFinal();
         System.out.println("hmac:"+byteToHex(hmacFinal));
 
-        //基于口令的密钥导出函数PBKDF2
+        //Password-Based Key Derivation Function PBKDF2
         char[] password = "P@ssw0rd".toCharArray();
         byte[] salt = new Random().randBytes(SM3Pbkdf2.DEFAULT_SALT_SIZE);
         int iterations = SM3Pbkdf2.MIN_ITER * 2;
@@ -128,7 +131,7 @@ public class JceTest {
     public void SM4_ECB_test() throws Exception{
         String text="Hello, GmSSL!";
         SecureRandom secureRandom = SecureRandom.getInstance("Random", "GmSSL");
-        // 测试SM4加密
+        // encryption
         Cipher sm4Cipher = Cipher.getInstance("SM4/ECB/PKCS7Padding", "GmSSL");
         SecretKeySpec sm4Key = new SecretKeySpec(secureRandom.generateSeed(SM4ECB.KEY_SIZE), "SM4");
         sm4Cipher.init(Cipher.ENCRYPT_MODE, sm4Key);
@@ -136,7 +139,7 @@ public class JceTest {
         sm4Cipher.update("cipher.".getBytes(),0, 6);
         byte[] ciphertext = sm4Cipher.doFinal();
         System.out.println("Ciphertext: " + byteToHex(ciphertext));
-        // 测试SM4解密
+        // decryption
         sm4Cipher.init(Cipher.DECRYPT_MODE, sm4Key);
         byte[] plaintext = sm4Cipher.doFinal(ciphertext);
         System.out.println("plaintext: " + new String(plaintext));
@@ -149,7 +152,7 @@ public class JceTest {
         byte[] randomBytes = new byte[32];
         secureRandom.nextBytes(randomBytes);
         System.out.println("Generated Random Bytes: " + byteToHex(randomBytes));
-
+        // encryption
         Cipher sm4cbcCipher = Cipher.getInstance("SM4/CBC/PKCS5Padding", "GmSSL");
         byte[] key = secureRandom.generateSeed(SM4CBC.KEY_SIZE);
         byte[] iv = secureRandom.generateSeed(SM4CBC.IV_SIZE);
@@ -159,7 +162,7 @@ public class JceTest {
         sm4cbcCipher.update(text.getBytes());
         byte[] ciphertext = sm4cbcCipher.doFinal();
         System.out.println("Ciphertext: " + byteToHex(ciphertext));
-
+        // decryption
         sm4cbcCipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(key, "SM4"), new IvParameterSpec(iv));
         sm4cbcCipher.update(ciphertext);
         byte[] plaintext2 = sm4cbcCipher.doFinal();
@@ -174,18 +177,19 @@ public class JceTest {
         byte[] randomBytes = new byte[32];
         secureRandom.nextBytes(randomBytes);
         System.out.println("Generated Random Bytes: " + byteToHex(randomBytes));
-
+        // encryption
         Cipher sm4cbcCipher = Cipher.getInstance("SM4/CBC/PKCS5Padding", "GmSSL");
         byte[] key = secureRandom.generateSeed(SM4CBC.KEY_SIZE);
         byte[] iv = secureRandom.generateSeed(SM4CBC.IV_SIZE);
         sm4cbcCipher.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(key, "SM4"), new IvParameterSpec(iv));
         byte[] ciphertext = new byte[100];
-        int cipherlen= sm4cbcCipher.update(text.getBytes(), 0, text.getBytes().length, ciphertext, 0);
-        cipherlen = sm4cbcCipher.update(text.getBytes(), 0, text.getBytes().length, ciphertext, cipherlen);
-        cipherlen = sm4cbcCipher.doFinal(text.getBytes(), 0, text.getBytes().length,ciphertext, cipherlen);
+        int cipherlen = sm4cbcCipher.update(text.getBytes(), 0, text.getBytes().length, ciphertext, 0);
+        cipherlen += sm4cbcCipher.update(text.getBytes(), 0, text.getBytes().length, ciphertext, cipherlen);
+        cipherlen += sm4cbcCipher.update(text.getBytes(), 0, text.getBytes().length, ciphertext, cipherlen);
+        cipherlen += sm4cbcCipher.doFinal(text.getBytes(), 0, text.getBytes().length,ciphertext, cipherlen);
         byte[] ciphertext1 = Arrays.copyOfRange(ciphertext,0,cipherlen);
         System.out.println("Ciphertext: " + byteToHex(ciphertext1));
-
+        // decryption
         byte[] plaintext = new byte[ciphertext1.length + SM4CBC.BLOCK_SIZE];
         sm4cbcCipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(key, "SM4"), new IvParameterSpec(iv));
         int plainLen = sm4cbcCipher.doFinal(ciphertext1, 0,ciphertext1.length, plaintext,0);
@@ -201,14 +205,15 @@ public class JceTest {
         Cipher sm4Cipher = Cipher.getInstance("SM4/CTR/NoPadding", "GmSSL");
         byte[] key = secureRandom.generateSeed(SM4CTR.KEY_SIZE);
         byte[] iv = secureRandom.generateSeed(SM4CTR.IV_SIZE);
-
+        // encryption
         sm4Cipher.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(key, "SM4"), new IvParameterSpec(iv));
-        byte[] ciphertext = new byte[50];
-        int cipherlen= sm4Cipher.update(text.getBytes(), 0, text.getBytes().length, ciphertext, 0);
-        cipherlen = sm4Cipher.doFinal(text.getBytes(), 0, text.getBytes().length, ciphertext, cipherlen);
+        byte[] ciphertext = new byte[100];
+        int cipherlen = sm4Cipher.update(text.getBytes(), 0, text.getBytes().length, ciphertext, 0);
+        cipherlen += sm4Cipher.update(text.getBytes(), 0, text.getBytes().length, ciphertext, cipherlen);
+        cipherlen += sm4Cipher.doFinal(text.getBytes(), 0, text.getBytes().length, ciphertext, cipherlen);
         byte[] ciphertext1 = Arrays.copyOfRange(ciphertext,0,cipherlen);
         System.out.println("Ciphertext: " + byteToHex(ciphertext1));
-
+        // decryption
         byte[] plaintext = new byte[ciphertext1.length+SM4CTR.BLOCK_SIZE];
         sm4Cipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(key, "SM4"), new IvParameterSpec(iv));
         int plainLen = sm4Cipher.doFinal(ciphertext1, 0, ciphertext1.length, plaintext, 0);
@@ -223,13 +228,14 @@ public class JceTest {
         Cipher sm4Cipher = Cipher.getInstance("SM4/CTR/NoPadding", "GmSSL");
         byte[] key = secureRandom.generateSeed(SM4CTR.KEY_SIZE);
         byte[] iv = secureRandom.generateSeed(SM4CTR.IV_SIZE);
+        // encryption
         sm4Cipher.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(key, "SM4"), new IvParameterSpec(iv));
         sm4Cipher.update(text.getBytes());
         sm4Cipher.update(text.getBytes());
         sm4Cipher.update(text.getBytes());
         byte[] ciphertext = sm4Cipher.doFinal();
         System.out.println("Ciphertext: " + byteToHex(ciphertext));
-
+        // decryption
         sm4Cipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(key, "SM4"), new IvParameterSpec(iv));
         sm4Cipher.update(ciphertext);
         byte[] plaintext1=sm4Cipher.doFinal();
@@ -244,15 +250,17 @@ public class JceTest {
         byte[] key = secureRandom.generateSeed(SM4GCM.KEY_SIZE);
         byte[] iv = secureRandom.generateSeed(SM4GCM.DEFAULT_IV_SIZE);
         byte[] aad = "Hello: ".getBytes();
+        // encryption
         sm4Cipher.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(key, "SM4"), new GCMParameterSpec(SM4GCM.MAX_TAG_SIZE,iv));
         sm4Cipher.updateAAD(aad);
         byte[] ciphertext = new byte[100];
         int cipherlen = sm4Cipher.update(text.getBytes(), 0, text.getBytes().length, ciphertext, 0);
-        cipherlen = sm4Cipher.update(text.getBytes(), 0, text.getBytes().length, ciphertext, cipherlen);
-        cipherlen = sm4Cipher.doFinal(text.getBytes(), 0, text.getBytes().length, ciphertext, cipherlen);
+        cipherlen += sm4Cipher.update(text.getBytes(), 0, text.getBytes().length, ciphertext, cipherlen);
+        cipherlen += sm4Cipher.update(text.getBytes(), 0, text.getBytes().length, ciphertext, cipherlen);
+        cipherlen += sm4Cipher.doFinal(text.getBytes(), 0, text.getBytes().length, ciphertext, cipherlen);
         byte[] ciphertext1 = Arrays.copyOfRange(ciphertext,0,cipherlen);
         System.out.println("Ciphertext: " + byteToHex(ciphertext1));
-
+        // decryption
         byte[] plaintext = new byte[ciphertext1.length+SM4GCM.MAX_TAG_SIZE];
         sm4Cipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(key, "SM4"), new GCMParameterSpec(SM4GCM.MAX_TAG_SIZE,iv));
         sm4Cipher.updateAAD(aad);
@@ -269,16 +277,16 @@ public class JceTest {
         byte[] key = secureRandom.generateSeed(SM4GCM.KEY_SIZE);
         byte[] iv = secureRandom.generateSeed(SM4GCM.DEFAULT_IV_SIZE);
         byte[] aad = "Hello: ".getBytes();
+        // encryption
         sm4Cipher.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(key, "SM4"), new GCMParameterSpec(SM4GCM.MAX_TAG_SIZE,iv));
         sm4Cipher.updateAAD(aad);
         sm4Cipher.updateAAD(aad);
         sm4Cipher.update(text.getBytes());
         sm4Cipher.update(text.getBytes());
         sm4Cipher.update(text.getBytes());
-        sm4Cipher.update(text.getBytes());
         byte[] ciphertext = sm4Cipher.doFinal();
         System.out.println("Ciphertext: " + byteToHex(ciphertext));
-
+        // decryption
         sm4Cipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(key, "SM4"), new GCMParameterSpec(SM4GCM.MAX_TAG_SIZE,iv));
         sm4Cipher.updateAAD(aad);
         sm4Cipher.updateAAD(aad);
@@ -294,14 +302,19 @@ public class JceTest {
         KeyPairGenerator keyPairGen = KeyPairGenerator.getInstance("SM9", "GmSSL");
         keyPairGen.initialize(sm9EncMasterKeyGenParameterSpec);
         keyPairGen.generateKeyPair();
-
+        // encryption
         PublicKey publicKey = keyPairGen.genKeyPair().getPublic();
+        // export public key
+        SM9PublicKey SM9PublicKey = (SM9PublicKey)publicKey;
+        SM9PublicKey.exportPublicKeyPem("SM9Public.enc.mpk");
         Cipher sm9Cipher = Cipher.getInstance("SM9", "GmSSL");
         sm9Cipher.init(Cipher.ENCRYPT_MODE, publicKey,sm9EncMasterKeyGenParameterSpec);
         byte[] ciphertext = sm9Cipher.doFinal(text.getBytes());
         System.out.println("Ciphertext: " + byteToHex(ciphertext));
-
+        // decryption
         SM9PrivateKey privateKey= (SM9PrivateKey) keyPairGen.genKeyPair().getPrivate();
+        // export private key
+        privateKey.exportEncryptedPrivateKeyInfoPem("123456", "SM9Private.enc.mpk");
         SM9MasterKey masterKey = (SM9MasterKey)privateKey.getSecretKey();
         SM9UserKey userKey= masterKey.extractKey(sm9EncMasterKeyGenParameterSpec.getId());
         sm9Cipher.init(Cipher.DECRYPT_MODE, userKey.getPrivateKey());
@@ -318,8 +331,10 @@ public class JceTest {
         keyPairGen.generateKeyPair();
 
         Signature signature = Signature.getInstance("SM9", "GmSSL");
-        // 测试签名
+        //  Signature
         SM9PrivateKey privateKey= (SM9PrivateKey) keyPairGen.genKeyPair().getPrivate();
+        // export private key
+        privateKey.exportEncryptedPrivateKeyInfoPem("123456", "SM9Private.sign.mpk");
         SM9MasterKey masterKey = (SM9MasterKey)privateKey.getSecretKey();
         SM9UserKey userKey= masterKey.extractKey(sm9SignMasterKeyGenParameterSpec.getId());
         signature.initSign(userKey.getPrivateKey());
@@ -327,9 +342,12 @@ public class JceTest {
         signature.update(signatureText);
         byte[] signatureByte = signature.sign();
         System.out.println("Signature:"+byteToHex(signatureByte));
-        // 测试验签
+        // Verify
         signature.setParameter(sm9SignMasterKeyGenParameterSpec);
         PublicKey publicKey=  keyPairGen.genKeyPair().getPublic();
+        // export public key
+        SM9PublicKey SM9PublicKey = (SM9PublicKey)publicKey;
+        SM9PublicKey.exportPublicKeyPem("SM9Public.sign.mpk");
         signature.initVerify(publicKey);
         signature.update(signatureText);
         boolean signatureResult = signature.verify(signatureByte);
@@ -343,19 +361,19 @@ public class JceTest {
         Cipher cipher = Cipher.getInstance("ZUC","GmSSL");
         SecretKey key = new ZucKey(secureRandom.generateSeed(ZucKey.KEY_SIZE));
         IvParameterSpec ivParameterSpec = new IvParameterSpec(secureRandom.generateSeed(ZucCipher.IV_SIZE));
+        // encryption
         cipher.init(Cipher.ENCRYPT_MODE, key, ivParameterSpec);
         byte[] ciphertext = new byte[100];
         int cipherlen = cipher.update(text.getBytes(), 0, text.getBytes().length, ciphertext, 0);
-        cipherlen = cipher.update(text.getBytes(), 0, text.getBytes().length, ciphertext, cipherlen);
-        cipherlen = cipher.doFinal(text.getBytes(), 0, text.getBytes().length, ciphertext, cipherlen);
+        cipherlen += cipher.update(text.getBytes(), 0, text.getBytes().length, ciphertext, cipherlen);
+        cipherlen += cipher.doFinal(text.getBytes(), 0, text.getBytes().length, ciphertext, cipherlen);
         byte[] ciphertext1 = Arrays.copyOfRange(ciphertext,0,cipherlen);
         System.out.println("Ciphertext: " + byteToHex(ciphertext1));
-
+        // decryption
         cipher.init(Cipher.DECRYPT_MODE, key, ivParameterSpec);
         cipher.update(ciphertext1);
         byte[] plaintext1 = cipher.doFinal();
         System.out.println("plaintext: " + new String(plaintext1));
-
     }
 
     /**

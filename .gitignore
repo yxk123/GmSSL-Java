@@ -92,7 +92,6 @@ lint/tmp/
 
 /.idea/
 /target/
-/sm9enc.mpk
-/sm9EncryptData.txt
-/sm9sign.mpk
-/sm9SignData.txt
+/*.mpk
+/*.txt
+/*.pem

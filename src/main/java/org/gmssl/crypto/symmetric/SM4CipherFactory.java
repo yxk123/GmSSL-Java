@@ -8,6 +8,9 @@
  */
 package org.gmssl.crypto.symmetric;
 
+import org.gmssl.crypto.CipherPaddingEnum;
+import org.gmssl.crypto.PKCS7PaddingScheme;
+
 import java.security.NoSuchAlgorithmException;
 
 /**
@@ -19,6 +22,11 @@ import java.security.NoSuchAlgorithmException;
  */
 public class SM4CipherFactory {
 
+    /**
+     * Create an SM4 encryption and decryption engine that supports ECB, CBC, CTR, and GCM modes.
+     * @param mode
+     * @return
+     */
     public static SM4Engine createCipher(String mode){
         SM4Engine cipher;
         try {
@@ -42,6 +50,17 @@ public class SM4CipherFactory {
             throw new RuntimeException(e);
         }
         return cipher;
+    }
+
+    /**
+     * Currently, only the PKCS7Padding padding mode for ECB algorithm mode is set. Other algorithms (SM4/CBC/PKCS5Padding, SM4/CTR/NoPadding, SM4/GCM/NoPadding) have their default padding implemented.
+     * @param engine
+     * @param padding
+     */
+    public static void setPaddingScheme(SM4Engine engine, String padding) {
+        if(CipherPaddingEnum.PKCS7Padding.name().equals(padding)){
+            engine.paddingScheme=new PKCS7PaddingScheme();
+        }
     }
 
 }

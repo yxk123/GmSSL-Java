@@ -71,19 +71,21 @@ public class SM4CBC extends SM4Engine {
 
     @Override
     protected byte[] processUpdate(byte[] input, int inputOffset, int inputLen) {
-        byte[] tempByteArray=new byte[outputByteArray.length+inputLen];
-        System.arraycopy(outputByteArray,0,tempByteArray,0,outputByteArray.length);
-        outputByteArray=tempByteArray;
+        int newOutputLength = BLOCK_SIZE + offset + inputLen;
+        if (outputByteArray.length < newOutputLength) {
+            int newSize = Math.max(outputByteArray.length * 3 / 2 + BLOCK_SIZE, newOutputLength);
+            outputByteArray = Arrays.copyOf(outputByteArray, newSize);
+        }
 
         int outLen = processUpdate(input, inputOffset, inputLen, outputByteArray, offset);
-        return Arrays.copyOfRange(outputByteArray,0,outLen);
+        return Arrays.copyOfRange(outputByteArray,offset,offset + outLen);
     }
 
     @Override
     protected int processUpdate(byte[] input, int inputOffset, int inputLen, byte[] output, int outputOffset){
         int outLen = update(input, inputOffset, inputLen, output, outputOffset);
         this.offset+=outLen;
-        return offset;
+        return outLen;
     }
 
     @Override
@@ -100,11 +102,11 @@ public class SM4CBC extends SM4Engine {
 
     @Override
     protected int processBlock(byte[] input, int inputOffset, int inputLen, byte[] output, int outputOffset) {
+        int outLen = 0;
         if(null!=input){
-            this.processUpdate(input, inputOffset, inputLen, output, outputOffset);
+            outLen=this.processUpdate(input, inputOffset, inputLen, output, outputOffset);
         }
-        int outLen = doFinal(output, this.offset);
-        outLen = outLen + this.offset;
+        outLen += doFinal(output, this.offset);
         this.offset = 0;
         return outLen;
     }

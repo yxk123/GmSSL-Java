@@ -41,7 +41,7 @@ public class ZucCipher extends CipherSpi {
 
     private byte[] outputByteArray;
 
-    protected ZucCipher(){
+    public ZucCipher(){
         ctx();
     }
 
@@ -109,19 +109,21 @@ public class ZucCipher extends CipherSpi {
 
     @Override
     protected byte[] engineUpdate(byte[] input, int inputOffset, int inputLen) {
-        byte[] tempByteArray=new byte[outputByteArray.length+inputLen];
-        System.arraycopy(outputByteArray,0,tempByteArray,0,outputByteArray.length);
-        outputByteArray=tempByteArray;
+        int newOutputLength = BLOCK_SIZE + offset + inputLen;
+        if (outputByteArray.length < newOutputLength) {
+            int newSize = Math.max(outputByteArray.length * 3 / 2 + BLOCK_SIZE, newOutputLength);
+            outputByteArray = Arrays.copyOf(outputByteArray, newSize);
+        }
 
         int outLen = engineUpdate(input, inputOffset, inputLen, outputByteArray, offset);
-        return Arrays.copyOfRange(outputByteArray,0,outLen);
+        return Arrays.copyOfRange(outputByteArray,offset,offset + outLen);
     }
 
     @Override
     protected int engineUpdate(byte[] input, int inputOffset, int inputLen, byte[] output, int outputOffset){
         int outLen = update(input, inputOffset, inputLen, output, outputOffset);
         this.offset+=outLen;
-        return offset;
+        return outLen;
     }
 
     @Override
@@ -138,11 +140,11 @@ public class ZucCipher extends CipherSpi {
 
     @Override
     protected int engineDoFinal(byte[] input, int inputOffset, int inputLen, byte[] output, int outputOffset) throws ShortBufferException, IllegalBlockSizeException, BadPaddingException {
-        if(null!=input) {
-            engineUpdate(input, inputOffset, inputLen, output, outputOffset);
+        int outLen = 0;
+        if(null!=input){
+            outLen=this.engineUpdate(input, inputOffset, inputLen, output, outputOffset);
         }
-        int outLen = doFinal(output, this.offset);
-        outLen = outLen + this.offset;
+        outLen += doFinal(output, this.offset);
         this.offset = 0;
         return outLen;
     }

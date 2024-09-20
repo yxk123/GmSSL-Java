@@ -9,8 +9,6 @@
 package org.gmssl.crypto.symmetric;
 
 import org.gmssl.GmSSLJNI;
-import org.gmssl.crypto.CipherPaddingEnum;
-import org.gmssl.crypto.PKCS7PaddingScheme;
 
 import javax.crypto.*;
 import java.security.*;
@@ -21,7 +19,7 @@ import java.security.spec.AlgorithmParameterSpec;
  * @email  290836576@qq.com
  * @date 2024/07/27
  * @description
- *
+ * CBC、CTR、ECB、GCM
  */
 public class SM4Cipher extends CipherSpi {
 
@@ -42,9 +40,7 @@ public class SM4Cipher extends CipherSpi {
 
     @Override
     protected void engineSetPadding(String padding) throws NoSuchPaddingException {
-        if(CipherPaddingEnum.PKCS7Padding.name().equals(padding)){
-            this.sm4Engine.paddingScheme=new PKCS7PaddingScheme();
-        }
+        SM4CipherFactory.setPaddingScheme(sm4Engine, padding);
     }
 
     @Override
@@ -54,7 +50,6 @@ public class SM4Cipher extends CipherSpi {
 
     @Override
     protected int engineGetOutputSize(int inputLen) {
-        // 输出大小根据模式和填充计算
         return 0;
     }
 

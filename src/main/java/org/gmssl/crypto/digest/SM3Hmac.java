@@ -79,7 +79,7 @@ public class SM3Hmac extends MacSpi {
 
     @Override
     protected void engineUpdate(byte[] input, int offset, int len) {
-        this.update(input, 0, len);
+        this.update(input, offset, len);
     }
 
     @Override
