@@ -116,7 +116,7 @@ public class ZucCipher extends CipherSpi {
         }
 
         int outLen = engineUpdate(input, inputOffset, inputLen, outputByteArray, offset);
-        return Arrays.copyOfRange(outputByteArray,offset,offset + outLen);
+        return Arrays.copyOfRange(outputByteArray,offset-outLen,offset);
     }
 
     @Override

@@ -92,7 +92,7 @@ public class SM4GCM extends SM4Engine {
         }
 
         int outLen = processUpdate(input, inputOffset, inputLen, outputByteArray, offset);
-        return Arrays.copyOfRange(outputByteArray,offset,offset + outLen);
+        return Arrays.copyOfRange(outputByteArray,offset-outLen,offset);
     }
 
     @Override

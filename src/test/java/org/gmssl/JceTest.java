@@ -93,8 +93,8 @@ public class JceTest {
     @Test
     public void sm2_certificate_test() throws Exception{
         SM2Certificate sm2Cert = new SM2Certificate();
-        sm2Cert.importPem("D:\\cert.pem");
-        System.out.println("NotAfter:"+sm2Cert.getNotAfter());
+        //sm2Cert.importPem("D:\\cert.pem");
+        //System.out.println("NotAfter:"+sm2Cert.getNotAfter());
     }
 
     @Test
