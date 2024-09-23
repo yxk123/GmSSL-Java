@@ -117,6 +117,19 @@ public class SM2Cipher extends CipherSpi {
         return null;
     }
 
+    /**
+     * The method does not perform any encryption or decryption; it only stores the input data. The returned result is meaningless, and the final result is output through `doFinal`.
+     * @param input the input buffer
+     * @param inputOffset the offset in <code>input</code> where the input
+     * starts
+     * @param inputLen the input length
+     * @param output the buffer for the result
+     * @param outputOffset the offset in <code>output</code> where the result
+     * is stored
+     *
+     * @return
+     * @throws ShortBufferException
+     */
     @Override
     protected int engineUpdate(byte[] input, int inputOffset, int inputLen, byte[] output, int outputOffset) throws ShortBufferException {
         if (input == null || inputOffset < 0 || inputLen < 0 || inputOffset + inputLen > input.length) {

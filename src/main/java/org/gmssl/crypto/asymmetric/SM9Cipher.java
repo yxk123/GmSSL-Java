@@ -109,13 +109,12 @@ public class SM9Cipher extends CipherSpi {
     }
 
     /**
-     *
+     * SM9 encryption and decryption are completed during the engineDoFinal phase. During the update phase, data is only cached, and no partial encryption or decryption results are returned.
      * @param input the input buffer
      * @param inputOffset the offset in <code>input</code> where the input
      * starts
      * @param inputLen the input length
-     * @description
-     * SM9 encryption and decryption are completed during the engineDoFinal phase. During the update phase, data is only cached, and no partial encryption or decryption results are returned.
+     *
      * @return
      */
     @Override
@@ -124,6 +123,19 @@ public class SM9Cipher extends CipherSpi {
         return null;
     }
 
+    /**
+     * SM9 encryption and decryption are completed during the engineDoFinal phase. During the update phase, data is only cached, and no partial encryption or decryption results are returned.
+     * @param input the input buffer
+     * @param inputOffset the offset in <code>input</code> where the input
+     * starts
+     * @param inputLen the input length
+     * @param output the buffer for the result
+     * @param outputOffset the offset in <code>output</code> where the result
+     * is stored
+     *
+     * @return
+     * @throws ShortBufferException
+     */
     @Override
     protected int engineUpdate(byte[] input, int inputOffset, int inputLen, byte[] output, int outputOffset) throws ShortBufferException {
         buffer.put(input, inputOffset, inputLen);
