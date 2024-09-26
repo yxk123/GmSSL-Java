@@ -11,7 +11,6 @@ package org.gmssl;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 import java.util.Map;
@@ -57,7 +56,7 @@ public class NativeLoader {
             return;
         }
         Path tempFile = null;
-        String resourceLibPath = Paths.get(RESOURCELIB_PREFIXPATH, library + "." + libExtension()).toString();
+        String resourceLibPath = RESOURCELIB_PREFIXPATH + "/" + library + "." + libExtension();
         try (InputStream inputStream = NativeLoader.class.getClassLoader().getResourceAsStream(resourceLibPath)) {
             tempFile = Files.createTempFile(library, "." + libExtension());
             tempFile.toFile().deleteOnExit();
